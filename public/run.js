@@ -1,12 +1,17 @@
 function newRow() {
     var fields = $('table tr:first th')
-    var str = "<tr class='new-row'>"
+    var str = "<form id='form' action='/new_row'>"
+    str += "<tr class='new-row'>"
+    
     for(var i=0;i<fields.length;i++) {
         str += "<td><input type='text' name='" + fields[i].innerText + "'></td>"
     }
-    str += "<td><a class='save' href='#'>Save</a></td>"
+    str += "<td><input type='submit' value='abc'></td>"
     str += "</tr>"
+    str += "</form>"
+    
     $('table').append(str)
+    $('#form').ajaxForm({success: reloadTable})
 }
 
 function saveNewRow() {
@@ -17,11 +22,17 @@ function saveNewRow() {
     $.post("/new_row",h)
 }
 
+function reloadTable() {
+  $.get('/table',function(data) {
+    $('.collection').html(data)
+  })
+}
+
 $(function() {
     $('a.new-row').click(function() {
         newRow()
     })
-    $('tr.new-row a.save').live('click',function() {
-        saveNewRow()
-    })
+    // $('tr.new-row a.save').live('click',function() {
+    //     saveNewRow()
+    // })
 })

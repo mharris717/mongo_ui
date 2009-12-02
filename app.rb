@@ -22,6 +22,11 @@ get "/" do
   haml :coll
 end
 
-post '/new_row' do
-  puts params.inspect
+get '/new_row' do
+  coll.save(params)
+end
+
+get '/table' do
+  @coll = coll
+  haml :table
 end
