@@ -5,14 +5,6 @@
     %script{:src => "jquery.form.js"}
     %script{:src => "run.js"}
   %body
-    .collection{:name => @coll}
-      %h2= @coll.name
-      %a.new-row{:href => '#'} New Row
-      %table
-        %tr
-          - @coll.keys.each do |k|
-            %th= k
-        - @coll.find.each do |r|
-          %tr
-            - @coll.keys.each do |k|
-              %td= r[k]
+    - @colls.each do |coll|
+      .collection{:id => coll.name}
+        = haml(:table, :locals => {:coll => coll})
