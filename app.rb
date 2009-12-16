@@ -1,6 +1,10 @@
 require 'rubygems'
 require 'sinatra'
-require "/code/mongo_persist/lib/mongo_persist"
+if ARGV.include?('--localmp')
+  require "/code/mongo_persist/lib/mongo_persist"
+else
+  require 'mongo_persist'
+end
 require 'haml'
 
 
