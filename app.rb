@@ -54,6 +54,15 @@ class Mongo::Collection
   def keys
     find.map { |x| x.keys }.flatten.uniq.sort.reject { |x| x.to_s[0..0] == '_' }
   end
+  def to_csv
+    arr = []
+    ks = keys
+    arr << ks.join(",")
+    find.each do |row|
+      arr << ks.map { |k| row[k] }.join(",")
+    end
+    arr.join("\n")
+  end
 end
 
 
@@ -144,5 +153,11 @@ end
 
 get '/table' do
   coll = db.collection(params[:coll])
-  haml :table, :locals => {:coll => coll}
+  if params[:format] == 'csv'
+    content_type 'application/csv'
+    attachment "#{params[:coll]}.csv"
+    coll.to_csv
+  else
+    haml :table, :locals => {:coll => coll}
+  end
 end
