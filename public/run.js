@@ -66,3 +66,30 @@ function coll(n) {
 
 $(coll('c1').setupNewRow)
 $(coll('c2').setupNewRow)
+
+
+
+function setupCellEdit() {
+    function editCell(cell) {
+        cell.html("<input type='text' />")
+        cell.find('input').focus()
+        var row = cell.parent()
+        var table = row.parent().parent()
+        var row_id = row.attr('data-row-id')
+        cell.find('input').blur(function() {
+            var ops = {coll: table.attr('data-coll'), row_id: row_id, field_name: cell.attr('data-field-name'), field_value: $(this).val()}
+            $.get("/update_row",ops,function(data) {
+                console.debug(data)
+                cell.text(data)
+            })
+            
+        })
+    }
+    
+    
+    $('.table-cell').click(function() {
+        editCell($(this))
+    })
+}
+
+$(setupCellEdit)

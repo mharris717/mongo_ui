@@ -2,13 +2,13 @@
 %a.new-row{:href => '#'} New Row
 %a.new-column{:href => '#'} New Column
 %form{:action => '/new_row'}
-  %table
+  %table{'data-coll' => coll.name}
     %thead
       %tr
         - coll.keys.each do |k|
           %th= k
     %tbody
       - coll.find.each do |r|
-        %tr
+        %tr{'data-row-id' => r['_id'], 'data-abc' => 52}
           - coll.keys.each do |k|
-            %td= r[k].mongo_inspect
+            %td.table-cell{:id => "cell_#{rand(1000000000)}", 'data-field-name' => k}= r[k].mongo_inspect

@@ -9,7 +9,7 @@ require 'haml'
 
 
 def db
-  Mongo::Connection.new.db('test-db3')
+  Mongo::Connection.new.db('test-db6')
 end
 
 
@@ -45,13 +45,13 @@ class Customer
   attr_accessor :email
 end
 
-    [Order,Product].each { |x| x.collection.remove }
-    @products = [Product.new(:name => 'Leather Couch'),Product.new(:name => 'Maroon Chair')].each { |x| x.mongo.save! }
-    @customers = [Customer.new(:email => 'a'),Customer.new(:email => 'b')].each { |x| x.mongo.save! }
-
-    @orders = []
-    @orders << Order.new(:customers => @customers, :po_number => 1234, :order_products => [OrderProduct.new(:unit_price => 1000, :quantity => 1, :product => @products[0])]).mongo.save!
-    @orders << Order.new(:customers => @customers, :po_number => 1235, :order_products => [OrderProduct.new(:unit_price => 200, :quantity => 2, :product => @products[1])]).mongo.save!
+    # [Order,Product].each { |x| x.collection.remove }
+    # @products = [Product.new(:name => 'Leather Couch'),Product.new(:name => 'Maroon Chair')].each { |x| x.mongo.save! }
+    # @customers = [Customer.new(:email => 'a'),Customer.new(:email => 'b')].each { |x| x.mongo.save! }
+    # 
+    # @orders = []
+    # @orders << Order.new(:customers => @customers, :po_number => 1234, :order_products => [OrderProduct.new(:unit_price => 1000, :quantity => 1, :product => @products[0])]).mongo.save!
+    # @orders << Order.new(:customers => @customers, :po_number => 1235, :order_products => [OrderProduct.new(:unit_price => 200, :quantity => 2, :product => @products[1])]).mongo.save!
 
   
 class Mongo::Collection
@@ -67,6 +67,38 @@ class Mongo::Collection
     end
     arr.join("\n")
   end
+  def find_or_create(ops)
+    return if find_one(ops)
+    save(ops)
+  end
+  def update_row(row_id,fields)
+    row_id = Mongo::ObjectID.from_string(row_id) if row_id.is_a?(String)
+    row = find_one('_id' => row_id)
+    fields.each do |k,v|
+      row[k] = v
+    end
+    save(row)
+  end
+end
+
+class SortedColl
+  attr_accessor :coll
+  include FromHash
+  def method_missing(sym,*args,&b)
+    coll.send(sym,*args,&b)
+  end
+  def find(*args)
+    coll.find(*args).sort_by { |x| x['value'] }.reverse
+  end
+end
+
+db.collection('players').tap do |c|
+  c.remove
+  c.find_or_create(:name => 'Albert Pujols', :position => '1B', :value => 62)
+  c.find_or_create(:name => 'David Wright', :position => '3B', :value => 55, :team => 'Panda')
+  c.find_or_create(:name => 'Roy Halladay', :position => 'SP', :value => 45)
+  c.find_or_create(:name => 'Ryan Zimmerman', :position => '3B', :value => 27)
+  c.find_or_create(:name => 'Hanley Ramirez', :position => 'SS', :value => 65)
 end
 
 
@@ -86,10 +118,11 @@ class Foo
   end
 end
 
-Foo.colls
+#Foo.colls
 
 get "/" do
   @colls = db.collections.reject { |x| x.name == 'system.indexes' }
+  @colls << SortedColl.new(:coll => @colls.first)
   haml :coll
 end
 
@@ -153,6 +186,12 @@ get '/new_row' do
   coll = db.collection(params[:coll])
   new_params = params.without_keys('coll','newField').map_value { |v| mongo_value(v) }
   coll.save(new_params)
+end
+
+get '/update_row' do
+  coll = db.collection(params[:coll])
+  coll.update_row(params['row_id'], params['field_name'] => params['field_value'])
+  params['field_value']
 end
 
 get '/table' do
