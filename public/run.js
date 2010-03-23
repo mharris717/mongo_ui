@@ -60,13 +60,13 @@ function coll(n) {
     this.setupNewRow = function() {
         collScope('a.new-row').live('click',newRow)
         collScope('a.new-column').live('click',newColumn)
+        collScope('a.reload').live('click',reloadTable)
     }
     return this;
 }
 
-$(coll('c1').setupNewRow)
-$(coll('c2').setupNewRow)
-
+$(coll('players').setupNewRow)
+$(coll('players, Sort by value desc').setupNewRow)
 
 
 function setupCellEdit() {
@@ -93,3 +93,8 @@ function setupCellEdit() {
 }
 
 $(setupCellEdit)
+$(function() {
+    $('a.reload-all').click(function() {
+        $('a.reload').click()
+    })
+})

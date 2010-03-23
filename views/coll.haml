@@ -5,6 +5,7 @@
     %script{:src => "jquery.form.js"}
     %script{:src => "run.js"}
   %body
+    %a.reload-all{:href => "#"} Reload All
     - @colls.each do |coll|
       .collection{:id => coll.name}
         = haml(:table, :locals => {:coll => coll})

@@ -1,8 +1,10 @@
 %h2= coll.name
 %a.new-row{:href => '#'} New Row
 %a.new-column{:href => '#'} New Column
+%a.reload{:href => '#'} Reload
+%a{:href => "/table?coll="+coll.name} Open
 %form{:action => '/new_row'}
-  %table{'data-coll' => coll.name}
+  %table{'data-coll' => coll.name, 'data-object-id' => coll.object_id}
     %thead
       %tr
         - coll.keys.each do |k|
@@ -12,3 +14,4 @@
         %tr{'data-row-id' => r['_id'], 'data-abc' => 52}
           - coll.keys.each do |k|
             %td.table-cell{:id => "cell_#{rand(1000000000)}", 'data-field-name' => k}= r[k].mongo_inspect
+            
