@@ -62,11 +62,10 @@ function coll(n) {
         collScope('a.new-column').live('click',newColumn)
         collScope('a.reload').live('click',reloadTable)
     }
+    this.reload = reloadTable
     return this;
 }
 
-// $(coll('players').setupNewRow)
-// $(coll('PlayersbyValue').setupNewRow)
 
 function eachColl(f) {
     $('.collection').each(function(x) {
@@ -96,6 +95,7 @@ function setupCellEdit() {
             $.get("/update_row",ops,function(data) {
                 console.debug(data)
                 cell.text(data)
+                reloadAll()
             })
             
         })
@@ -107,9 +107,22 @@ function setupCellEdit() {
     })
 }
 
-$(setupCellEdit)
+
+function reloadAll() {
+    eachColl(function(c) {
+        c.reload()
+    })
+}
+
 $(function() {
-    $('a.reload-all').click(function() {
-        $('a.reload').click()
+    $('a.reload-all').click(reloadAll)
+})
+
+$(setupCellEdit)
+
+$(function() {
+    $('#colls').masonry({
+        columnWidth: 200, 
+        itemSelector: '.collection'
     })
 })

@@ -192,13 +192,6 @@ end
 
 #Foo.colls
 
-def get_all_colls
-  res = db.collections.reject { |x| x.name == 'system.indexes' }
-  players = res.first
-  res << SortedColl.new(:coll => res.first, :sort_ops => [['value',:desc]])
-  res << res.first.scope_exists(:team => false)
-  res
-end
 
 class Object
   def self.from_hash_safe(ops)
@@ -222,7 +215,7 @@ class UserCollection
   key :base_coll_name
   def to_coll
     #MockColl.new(:sort_conditions => sort_conditions, :name => coll_name, :base_coll_name => base_coll_name)
-    MockColl.from_hash_safe(attributes)
+    MockColl.from_hash_safe(attributes.merge(:user_coll => self))
   end
   def self.to_colls
     all.map { |x| x.to_coll }
@@ -230,7 +223,7 @@ class UserCollection
 end
 
 class MockColl
-  attr_accessor :sort_conditions, :filter_conditions, :coll_name, :base_coll_name
+  attr_accessor :sort_conditions, :filter_conditions, :coll_name, :base_coll_name, :user_coll
   include FromHash
   def raw_base_coll
     db.collection(base_coll_name)
@@ -243,6 +236,8 @@ class MockColl
   end
   def find(selector={},ops={})
     sorted_base_coll.find(selector,ops)
+  rescue
+    []
   end
   def keys
     #eval_loop
@@ -337,7 +332,14 @@ end
 
 class Array
   def mongo_inspect
-    "<ul>" + map { |x| "<li>#{x.mongo_inspect}</li>" }.join("") + "</ul>"
+    if contains_array?
+      "<ul>" + map { |x| "<li>#{x.mongo_inspect}</li>" }.join("") + "</ul>"
+    else
+      map { |x| x.mongo_inspect }.join(",")
+    end
+  end
+  def contains_array?
+    any? { |x| x.kind_of?(Array) }
   end
 end
 
