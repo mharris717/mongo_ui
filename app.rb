@@ -7,10 +7,10 @@ else
 end
 require 'haml'
 require 'mongo_scope'
-require 'active_support'
+require 'activesupport'
 
 def db
-  Mongo::Connection.new.db('test-db6')
+  Mongo::Connection.new.db('test-db7')
 end
 
 class Order
@@ -87,13 +87,13 @@ class Mongo::Collection
     save(ops)
   end
   def update_row(row_id,fields)
-    puts "updating #{row_id} with #{fields.inspect}"
+    #puts "updating #{row_id} with #{fields.inspect}"
     #eval_loop
     row_id = Mongo::ObjectID.from_string(row_id) if row_id.is_a?(String)
     row = find('_id' => row_id).to_a.first
     raise "can't find row #{row_id} #{row_id.class} in coll #{name}.  Count is #{find.count} IDs are "+find.to_a.map { |x| x['_id'] }.inspect + "Trying to update with #{fields.inspect}" unless row
     fields.each do |k,v|
-      row[k] = v
+      row[k] = mongo_value(v)
       row.delete(k) if v.blank?
     end
     save(row)
@@ -171,6 +171,7 @@ db.collection('players').tap do |c|
   c.find_or_create(:name => 'David Wright', :position => '3B', :value => 55, :team => 'Panda')
   c.find_or_create(:name => 'Roy Halladay', :position => 'SP', :value => 45)
   c.find_or_create(:name => 'Ryan Zimmerman', :position => '3B', :value => 27)
+  c.find_or_create(:name => 'Michael Bourn', :position => 'OF', :value => 27)
   c.find_or_create(:name => 'Hanley Ramirez', :position => 'SS', :value => 65)
 end
 
@@ -199,26 +200,106 @@ def get_all_colls
   res
 end
 
-require 'mongo_mapper'
-MongoMapper.database = 'test-db6'
-class UserTable
-  include MongoMapper::Document
-  has_many :sort_conditions
-  key :name
-  key :base_table_name
+class Object
+  def self.from_hash_safe(ops)
+    res = new
+    ops.each do |k,v|
+      res.send_if_respond("#{k}=",v)
+    end
+    res 
+  end
+  def send_if_respond(k,v)
+    send(k,v) if respond_to?(k)
+  end
 end
 
-UserTable.all.each { |x| x.destroy }
-UserTable.new(:name => 'Players by Value')
+require 'mongo_mapper'
+MongoMapper.database = 'test-db7'
+class UserCollection
+  include MongoMapper::Document
+  key :sort_conditions
+  key :coll_name
+  key :base_coll_name
+  def to_coll
+    #MockColl.new(:sort_conditions => sort_conditions, :name => coll_name, :base_coll_name => base_coll_name)
+    MockColl.from_hash_safe(attributes)
+  end
+  def self.to_colls
+    all.map { |x| x.to_coll }
+  end
+end
 
-get "/" do
-  @colls = get_all_colls
-  haml :coll
+class MockColl
+  attr_accessor :sort_conditions, :filter_conditions, :coll_name, :base_coll_name
+  include FromHash
+  def raw_base_coll
+    db.collection(base_coll_name)
+  end
+  def sorted_base_coll
+    sort_conditions ? SortedColl.new(:coll => filtered_base_coll, :sort_ops => sort_conditions) : filtered_base_coll
+  end
+  def filtered_base_coll
+    filter_conditions ? raw_base_coll.scope_eq(filter_conditions) : raw_base_coll
+  end
+  def find(selector={},ops={})
+    sorted_base_coll.find(selector,ops)
+  end
+  def keys
+    #eval_loop
+    #puts "self #{self.class} #{self.coll_name}, base #{base_coll.class} #{base_coll.name}"
+    raw_base_coll.keys
+  end
+  def name; coll_name; end
+  def method_missing(sym,*args,&b)
+    sorted_base_coll.send(sym,*args,&b)
+  end
+end
+
+UserCollection.all.each { |x| x.destroy }
+UserCollection.create!(:coll_name => 'PlayersbyValue', :base_coll_name => 'players', :sort_conditions => [['value',:desc]])
+UserCollection.create!(:coll_name => 'PandaPlayers', :base_coll_name => 'players', :filter_conditions => {:team => 'Panda'})
+UserCollection.create!(:coll_name => 'AvailablePlayers', :base_coll_name => 'players', :filter_conditions => {:team => nil})
+
+class Workspace
+  class << self
+    fattr(:instance) { new }
+  end
+  def colls
+    res = db.collections.reject { |x| x.name == 'system.indexes' || x.name =~ /ufser_/ }
+    res += UserCollection.to_colls
+    res
+  end  
+  def get_coll(n)
+    colls.find { |x| x.name == n }
+  end
+end
+
+class Object
+  def raw_value
+    if kind_of?(String)
+      self
+    elsif nil?
+      ""
+    else
+      inspect
+    end
+  end
+end
+
+class Hash
+  def map_key
+    res = {}
+    each { |k,v| res[yield(k)] = v }
+    res 
+  end
 end
 
 def mongo_value(v)
   if v[0..0] == '['
-    v[1...-1].split(",").map { |x| x.tmo }
+    #v[1...-1].split(",").map { |x| x.tmo }
+    eval(v).map { |x| x.tmo }
+  elsif v[0..0] == '{'
+    eval(v).map_key { |x| x.tmo }.map_value { |x| x.tmo }
   else
     v.tmo
   end
@@ -244,7 +325,13 @@ class String
     self =~ /^[\d\.]*$/
   end
   def tmo
-    num? ? to_f.tmo : self
+    if num? 
+      to_f.tmo 
+    elsif blank?
+      nil
+    else
+      self
+    end
   end
 end
 
@@ -271,21 +358,35 @@ class Hash
   end
 end
 
-get '/new_row' do
-  puts params.inspect
-  coll = db.collection(params[:coll])
+helpers do
+  fattr(:coll) do
+    Workspace.instance.get_coll(params[:coll])
+  end
+end
+
+def myget(*args,&b)
+  get(*args) do
+    puts "Params: #{params.inspect}"
+    instance_eval(&b)
+  end
+end
+
+myget "/" do
+  @colls = Workspace.instance.colls
+  haml :coll
+end
+
+myget '/new_row' do
   new_params = params.without_keys('coll','newField').map_value { |v| mongo_value(v) }
   coll.save(new_params)
 end
 
-get '/update_row' do
-  coll = db.get_coll(params[:coll])
+myget '/update_row' do
   coll.update_row(params['row_id'], params['field_name'] => params['field_value'])
   params['field_value']
 end
 
-get '/table' do
-  coll = db.get_coll(params[:coll])
+myget '/table' do
   if params[:format] == 'csv'
     content_type 'application/csv'
     attachment "#{params[:coll]}.csv"
@@ -294,3 +395,13 @@ get '/table' do
     haml :table, :locals => {:coll => coll}
   end
 end
+
+def assert_mongo_value(str,exp)
+  res = mongo_value(str)
+  if res != exp
+    raise "Expected #{exp.inspect}, got #{res.inspect}"
+  end
+end
+
+assert_mongo_value "[1,2,3]",[1,2,3]
+assert_mongo_value "{1 => 2}", {1 => 2}

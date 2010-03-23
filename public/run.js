@@ -65,13 +65,28 @@ function coll(n) {
     return this;
 }
 
-$(coll('players').setupNewRow)
-$(coll('players, Sort by value desc').setupNewRow)
+// $(coll('players').setupNewRow)
+// $(coll('PlayersbyValue').setupNewRow)
+
+function eachColl(f) {
+    $('.collection').each(function(x) {
+        console.debug($(this))
+        console.debug($(this).attr('id'))
+        var c = coll($(this).attr('id'))
+        f(c)
+    })
+}
+
+$(function() {
+    eachColl(function(c) {
+        c.setupNewRow()
+    })
+})
 
 
 function setupCellEdit() {
     function editCell(cell) {
-        cell.html("<input type='text' />")
+        cell.html("<input type='text' value='" + cell.attr('data-raw-value') + "'/>")
         cell.find('input').focus()
         var row = cell.parent()
         var table = row.parent().parent()
@@ -87,7 +102,7 @@ function setupCellEdit() {
     }
     
     
-    $('.table-cell').click(function() {
+    $('.table-cell').live('click',function() {
         editCell($(this))
     })
 }

@@ -13,5 +13,5 @@
       - coll.find.each do |r|
         %tr{'data-row-id' => r['_id'], 'data-abc' => 52}
           - coll.keys.each do |k|
-            %td.table-cell{:id => "cell_#{rand(1000000000)}", 'data-field-name' => k}= r[k].mongo_inspect
+            %td.table-cell{:id => "cell_#{rand(1000000000)}", 'data-field-name' => k, 'data-raw-value' => r[k].raw_value}= r[k].mongo_inspect
             
