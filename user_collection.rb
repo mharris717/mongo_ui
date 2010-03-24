@@ -1,13 +1,14 @@
 require 'mongo_mapper'
-MongoMapper.database = 'test-db7'
+MongoMapper.database = 'test-db9'
 class UserCollection
   include MongoMapper::Document
   key :sort_conditions
+  key :filter_conditions
   key :coll_name
   key :base_coll_name
   def to_coll
     #MockColl.new(:sort_conditions => sort_conditions, :name => coll_name, :base_coll_name => base_coll_name)
-    MockColl.from_hash_safe(attributes.merge(:user_coll => self))
+    MockColl.from_hash_safe(:user_coll => self, :sort_conditions => sort_conditions, :filter_conditions => filter_conditions, :coll_name => coll_name, :base_coll_name => base_coll_name)
   end
   def self.to_colls
     all.map { |x| x.to_coll }
@@ -24,9 +25,10 @@ class MockColl
     sort_conditions ? SortedColl.new(:coll => filtered_base_coll, :sort_ops => sort_conditions) : filtered_base_coll
   end
   def filtered_base_coll
-    filter_conditions ? raw_base_coll.scope_eq(filter_conditions) : raw_base_coll
+    (filter_conditions && !filter_conditions.empty?) ? raw_base_coll.scope_eq(filter_conditions) : raw_base_coll
   end
   def find(selector={},ops={})
+    puts "filter_conditions #{filter_conditions.inspect}"
     sorted_base_coll.find(selector,ops)
   rescue
     []
@@ -42,8 +44,9 @@ class MockColl
   end
 end
 
+puts "#{UserCollection.all.size} UserCollections"
 UserCollection.all.each { |x| x.destroy }
-UserCollection.create!(:coll_name => 'PlayersbyValue', :base_coll_name => 'players', :sort_conditions => [['value',:desc]])
+# UserCollection.create!(:coll_name => 'PlayersbyValue', :base_coll_name => 'players', :sort_conditions => [['value',:desc]])
 # UserCollection.create!(:coll_name => 'PandaPlayers', :base_coll_name => 'players', :filter_conditions => {:team => 'Panda'})
 # UserCollection.create!(:coll_name => 'AvailablePlayers', :base_coll_name => 'players', :filter_conditions => {:team => nil})
 

@@ -3,6 +3,7 @@
 %a.new-column{:href => '#'} New Column
 %a.reload{:href => '#'} Reload
 %a{:href => "/table?coll="+coll.name} Open
+%a{:href => "/copy?coll="+coll.name} Copy
 %form{:action => '/new_row'}
   %table{'data-coll' => coll.name, 'data-object-id' => coll.object_id}
     %thead

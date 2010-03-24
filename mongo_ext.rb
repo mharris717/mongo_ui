@@ -63,9 +63,9 @@ class Mongo::Collection
       h['_allwords'] = h.without_keys('_allwords').values.join("") + 'abc'
       old_insert(h,*args)
     end
-    def update(h,*args)
+    def update(id,h,*args)
       h['_allwords'] = h.without_keys('_allwords').values.join("") + 'abc'
-      old_update(h,*args)
+      old_update(id,h,*args)
     end
   #end
 end

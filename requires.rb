@@ -9,4 +9,4 @@ require 'mongo_scope'
 require 'activesupport'
 require 'facets/file/write'
 
-%w(ext mongo_ext mongo_display proxy_coll user_collection sanity data_setup).each { |x| require File.dirname(__FILE__) + "/#{x}" }
+%w(ext mongo_ext mongo_display proxy_coll user_collection sanity data_setup coll_data).each { |x| require File.dirname(__FILE__) + "/#{x}" }

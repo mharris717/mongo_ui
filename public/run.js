@@ -62,7 +62,8 @@ function coll(n) {
         collScope('table').dataTable( {
     		"bProcessing": true,
     		"bServerSide": true,
-    "sPaginationType": "full_numbers",
+            "sPaginationType": "full_numbers",
+            fnDrawCallback: function() { setTimeout(setupMasonry,0) },
     		"sAjaxSource": "/table2?coll="+collName
     	} );
     }
@@ -129,13 +130,18 @@ $(function() {
 })
 
 $(setupCellEdit)
-// 
-// $(function() {
-//     $('#colls').masonry({
-//         columnWidth: 200, 
-//         itemSelector: '.collection'
-//     })
-// })
+
+function runRepeat(f) {
+    f()
+    setTimeout(function() { runRepeat(f) },1000)
+}
+
+function setupMasonry() {
+    // $('#colls').masonry({
+    //     columnWidth: 200, 
+    //     itemSelector: '.collection'
+    // })
+}
 
 //---------------------------
 

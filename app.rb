@@ -1,5 +1,5 @@
 def db
-  Mongo::Connection.new.db('test-db7')
+  Mongo::Connection.new.db('test-db9')
 end
 
 require File.dirname(__FILE__) + "/requires"
@@ -13,7 +13,7 @@ class Workspace
     fattr(:instance) { new }
   end
   def colls
-    res = db.collections.reject { |x| x.name == 'system.indexes' || x.name =~ /ufser_/ }
+    res = db.collections.reject { |x| x.name == 'system.indexes' || x.name =~ /user_/ }
     res += UserCollection.to_colls
     res
   end  
@@ -33,13 +33,14 @@ helpers do
     params.each_sorted_by_key_asc do |k,v|
       strs << "#{k}: #{v}"
     end
-    puts strs.join("\n")
+    #puts strs.join("\n")
     File.create("log/last_params.txt",strs.join("\n"))
   end
 end
 
 get "/" do
-  @colls = Workspace.instance.colls
+  @colls = Workspace.instance!.colls
+  UserCollection.all.each { |x| puts x.inspect }
   haml :db
 end
 
@@ -63,60 +64,17 @@ get '/table' do
   end
 end
 
-class CollData
-  attr_accessor :coll, :params
-  include FromHash
-  fattr(:search_str) { params[:sSearch] }
-  fattr(:search_terms) { search_str.split(" ").map { |x| x.strip }.select { |x| x.present? } }
-  fattr(:find_ops) do
-    {:limit => params[:iDisplayLength].to_i, :skip => params[:iDisplayStart].to_i, :sort => sort_terms}
-  end
-  def search_field_hash(term)
-    parts = term.split(':').map { |x| x.strip }
-    if parts.size == 1
-      return {'_allwords' => /#{term}/i}
-    elsif parts.size == 2
-      field, value = *parts
-      {field => /#{value}/i}
-    elsif parts.size == 3
-      field, op, value = *parts
-      {field => {"$#{op}" => value.to_f}}
-    else
-      raise "bad"
-    end
-  end
-  def selector
-    return {} unless search_str.present?
-    search_terms.inject({}) do |h,term|
-      h.merge(search_field_hash(term))
-    end
-  end
-  def sort_terms
-    return nil unless params[:iSortCol_0].present?
-    field = keys[params[:iSortCol_0].to_i]
-    [[field,params[:sSortDir_0].to_sym]]
-  end
-  fattr(:rows) do
-    coll.find(selector,find_ops).to_a
-  end
-  fattr(:unpaginated_count) do
-    coll.find(selector,{}).count
-  end
-  fattr(:keys){ coll.keys }
-  fattr(:data) do
-    rows.map { |row| row.values_in_key_order(keys) }
-  end
-  fattr(:json_hash) do
-    {:sEcho => params[:sEcho], :iTotalRecords => coll.find.count, :iTotalDisplayRecords => unpaginated_count, :aaData => data}
-  end
-  fattr(:json_str) do
-    puts json_hash.without_keys(:aaData).merge(:rows_size => json_hash[:aaData].size).inspect
-    json_hash.to_json
-  end
-end
-
 get "/table2" do
   print_params!
   manager = CollData.new(:coll => coll, :params => params)
   manager.json_str
+end
+
+get "/copy" do
+  new_name = coll.name + "copy"
+  puts "creating user collection"
+  a = UserCollection.all.size
+  UserCollection.create!(:coll_name => new_name, :base_coll_name => coll.name)
+  puts "UC count #{a} #{UserCollection.all.size}"
+  redirect "/"
 end
