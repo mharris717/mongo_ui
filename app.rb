@@ -22,13 +22,6 @@ class Workspace
   end
 end
 
-class Object
-  def to_thing
-    blank? ? "_" : self
-  end
-end
-
-
 helpers do
   fattr(:coll) do
     Workspace.instance.get_coll(params[:coll])
@@ -76,7 +69,7 @@ class CollData
   fattr(:search_str) { params[:sSearch] }
   fattr(:search_terms) { search_str.split(" ").map { |x| x.strip }.select { |x| x.present? } }
   fattr(:find_ops) do
-    {:limit => params[:iDisplayLength].to_i, :skip => params[:iDisplayStart].to_i}
+    {:limit => params[:iDisplayLength].to_i, :skip => params[:iDisplayStart].to_i, :sort => sort_terms}
   end
   def search_field_hash(term)
     parts = term.split(':').map { |x| x.strip }
@@ -98,6 +91,11 @@ class CollData
       h.merge(search_field_hash(term))
     end
   end
+  def sort_terms
+    return nil unless params[:iSortCol_0].present?
+    field = keys[params[:iSortCol_0].to_i]
+    [[field,params[:sSortDir_0].to_sym]]
+  end
   fattr(:rows) do
     coll.find(selector,find_ops).to_a
   end
@@ -106,9 +104,7 @@ class CollData
   end
   fattr(:keys){ coll.keys }
   fattr(:data) do
-    rows.map do |row|
-      keys.map { |k| row[k].to_thing }
-    end
+    rows.map { |row| row.values_in_key_order(keys) }
   end
   fattr(:json_hash) do
     {:sEcho => params[:sEcho], :iTotalRecords => coll.find.count, :iTotalDisplayRecords => unpaginated_count, :aaData => data}

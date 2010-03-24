@@ -115,3 +115,9 @@ class Hash
     res
   end
 end
+
+class Hash
+  def values_in_key_order(ks)
+    ks.map { |x| self[x] }
+  end
+end
