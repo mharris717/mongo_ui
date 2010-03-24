@@ -13,7 +13,7 @@ class ProxyColl
   end
   def find(selector={},ops={},&b)
     modify_find_ops(selector,ops)
-    puts "running find with selector #{selector.inspect} ops #{ops.inspect}"
+#    puts "running find with selector #{selector.inspect} ops #{ops.inspect}"
     coll.find(selector,ops,&b)
   end
 end
