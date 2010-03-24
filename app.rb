@@ -101,14 +101,21 @@ class CollData
   fattr(:rows) do
     coll.find(selector,find_ops).to_a
   end
+  fattr(:unpaginated_count) do
+    coll.find(selector,{}).count
+  end
   fattr(:keys){ coll.keys }
   fattr(:data) do
     rows.map do |row|
       keys.map { |k| row[k].to_thing }
     end
   end
+  fattr(:json_hash) do
+    {:sEcho => params[:sEcho], :iTotalRecords => coll.find.count, :iTotalDisplayRecords => unpaginated_count, :aaData => data}
+  end
   fattr(:json_str) do
-    {:sEcho => params[:sEcho], :iTotalRecords => coll.find.count, :iTotalDisplayRecords => rows.size, :aaData => data}.to_json
+    puts json_hash.without_keys(:aaData).merge(:rows_size => json_hash[:aaData].size).inspect
+    json_hash.to_json
   end
 end
 

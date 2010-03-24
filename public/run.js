@@ -62,7 +62,7 @@ function coll(n) {
         collScope('table').dataTable( {
     		"bProcessing": true,
     		"bServerSide": true,
-    
+    "sPaginationType": "full_numbers",
     		"sAjaxSource": "/table2?coll="+collName
     	} );
     }
