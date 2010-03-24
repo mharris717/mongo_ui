@@ -12,4 +12,4 @@
     #colls
       - @colls.each do |coll|
         .collection{:id => coll.name}
-          = haml(:table, :locals => {:coll => coll})
+          = haml(:coll, :locals => {:coll => coll})
