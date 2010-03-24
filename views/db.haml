@@ -1,15 +1,25 @@
 %html
   %head
+    %title SUPERMAN
     %script{:src => "jquery.js"}
-    %script{:src => "jquery-ui.js"}
+    - if false
+      %script{:src => "jquery-ui.js"}
+    %script{:src => "http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"}
     %script{:src => "jquery.form.js"}
     %script{:src => "jquery.masonry.js"}
     %script{:src => "jquery.dataTables.js"}
+    %script{:src => "media/ZeroClipboard/ZeroClipboard.js"}
+    %script{:src => "media/js/TableTools.js"}
     %script{:src => "run.js"}
+    %link{:rel => 'stylesheet', :href => "jquery-ui.css"}
     %link{:rel => 'stylesheet', :href => "table.css"}
+    %link{:rel => 'stylesheet', :href => "media/css/TableTools.css"}
+    %link{:rel => 'stylesheet', :href => "base.css"}
   %body
-    %a.reload-all{:href => "#"} Reload All
+    - if false
+      %a.reload-all{:href => "#"} Reload All
     #colls
       - @colls.each do |coll|
         .collection{:id => coll.name, 'data-search-str' => coll.search_str, 'data-sort' => coll.sort_str}
           = haml(:coll, :locals => {:coll => coll})
+          

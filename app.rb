@@ -37,6 +37,14 @@ helpers do
     #puts strs.join("\n")
     File.create("log/last_params.txt",strs.join("\n"))
   end
+  def table_options_dropdown
+    res = "<select>"
+    ['','copy','search'].each do |action|
+      res += "<option value='#{action}'>#{action.humanize}</option>"
+    end
+    res += "</select>"
+    res
+  end
 end
 
 get "/" do
@@ -51,7 +59,7 @@ get '/new_row' do
 end
 
 get '/update_row' do
-  coll.update_row(params['row_id'], params['field_name'] => params['field_value'])
+  coll.update_row(params['row_id'], params['field_name'].to_s.downcase => params['field_value'])
   params['field_value']
 end
 
@@ -68,11 +76,11 @@ end
 get "/table2" do
   print_params!
   manager = CollData.new(:coll => coll, :params => params)
-  manager.json_str
+  manager.json_str.tap { |x| puts x }
 end
 
 get "/copy" do
-  new_name = coll.name + "copy"
+  new_name = coll.name + "copy#{rand(1000)}"
   puts "creating user collection"
   a = UserCollection.all.size
   UserCollection.create!(:coll_name => new_name, :base_coll_name => coll.name)

@@ -1,19 +1,20 @@
-.title
-  %h2= coll.name
-%a.new-row{:href => '#'} New Row
-%a.new-column{:href => '#'} New Column
-%a.reload{:href => '#'} Reload
-%a{:href => "/table?coll="+coll.name.to_s} Open
-%a{:href => "/copy?coll="+coll.name.to_s} Copy
+%span.title= coll.name.humanize
+- if false
+  %a.new-row{:href => '#'} New Row
+  %a.new-column{:href => '#'} New Column
+  %a.reload{:href => '#'} Reload
+  %a{:href => "/table?coll="+coll.name.to_s} Open
+  %a{:href => "/copy?coll="+coll.name.to_s} Copy
+%span.actions= table_options_dropdown
 %form{:action => '/new_row'}
   %table{'data-coll' => coll.name, 'data-object-id' => coll.object_id, 'data-search-str' => coll.search_str, 'data-sort' => coll.sort_str}
     %thead
       %tr
         - coll.keys.each do |k|
-          %th= k
+          %th= k.to_s.humanize
     %tbody
       - coll.find.to_a[0..0].each do |r|
-        %tr{'data-row-id' => r['_id'], 'data-abc' => 52}
+        %tr{'data-row-id' => r['_id']}
           - coll.keys.each do |k|
             %td.table-cell{:id => "cell_#{rand(1000000000)}", 'data-field-name' => k, 'data-raw-value' => r[k].raw_value}= r[k].mongo_inspect
             

@@ -1,0 +1,69 @@
+.collection {
+    max-width: 500px;
+    border-widdth: 5px;
+    border-styfle: soldid;
+}
+
+td {
+    font-size: 0.7em;
+}
+
+th {
+    font-size: 0.7em;
+}
+
+.dataTables_info, .dataTables_lendgth, .dataTabfles_paginate {
+    display: none;
+}
+
+.dataTables_length {
+    position: absolute;
+    font-size: 1px;
+    top: -23px;
+    left: 120px;
+}
+
+.dataTables_filter {
+    position: absolute;
+    width: 200px;
+    top: -23px;
+    left: 150px;
+    font-size: 1px;
+}
+
+.dataTables_paginate {
+    position: absolute;
+    top: -23px;
+    right: 40px;
+}
+
+table {
+    float: left;
+}
+
+.title {
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+.actions {
+    font-size: 0.5em;
+}
+
+tr td:first {
+    display: none;
+}
+
+.dataTables_filter input {
+    display: none;
+}
+
+.collection .actions {
+    position: absolute;
+    left: 65px;
+}
+
+.collection .dataTables_length {
+    position: absolute;
+    left: 142px;
+}

@@ -30,6 +30,6 @@ load_players!
 
 db.collections.reject { |x| x.name == 'players' }.each { |x| x.drop }
 
-db.collection('abc').save(:a => [:b,:c], :d => {:e => :f, :g => :h})
+#db.collection('abc').save(:a => [:b,:c], :d => {:e => :f, :g => :h})
 
 # raise db.collection('players').scope_in(:name => [/wright/i,/hanley/i,'Ramirez, Hanley']).find.map { |x| x['name'] }.inspect

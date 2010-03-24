@@ -1,3 +1,5 @@
+TableToolsInit.sSwfPath = "/media/swf/ZeroClipboard.swf";
+ 
 function tag(t,cont) {
     var str = "<" + t + " "
     str += ">" + cont + "</" + t + ">"
@@ -65,7 +67,7 @@ function coll(n) {
             box.focus()
             box.blur(function() {
                 $.get("/rename",{coll: collName, new_name: $(this).val()},function(data) {
-                    collScope('.title').html("<h2>"+data+"</h2>")
+                    collScope('.title').html(data)
                     window.location.reload()
                 })
             })
@@ -76,8 +78,11 @@ function coll(n) {
         var ops = {
     		"bProcessing": true,
     		"bServerSide": true,
-            "sPaginationType": "full_numbers",
+           // "sPaginationType": "full_numbers",
+            //"sDom": 'T<"clear">lfrtip', 
+          //  'aoColumns': [{ "bVisible": false },null,null,null,null,null,null],
             //fnDrawCallback: function() { setTimeout(setupMasonry,0) },
+            fnDrawCallback: hideID,
     		"sAjaxSource": "/table2?coll="+collName
     	}
     	var ss = collScope('').attr('data-search-str')
@@ -85,7 +90,34 @@ function coll(n) {
     	    ops['oSearch'] = {'sSearch': ss}
     	}
     	ops['aaSorting'] = eval(collScope('').attr('data-sort'))
-        collScope('table').dataTable( ops );
+        var t = collScope('table').dataTable( ops );
+        //new FixedHeader(t)
+        
+    }
+    
+    function copy() {
+        $.get("/copy",{coll: collName},function() {
+            window.location.reload()
+        })
+    }
+    
+    function search() {
+        collScope('.dataTables_filter input').show()
+    }
+    
+    function setupActions() {
+        var h = {'copy': copy, 'search': search}
+        collScope('.actions select').change(function() {
+            var val = $(this).find('option:selected').val()
+            h[val]()
+        })
+    }
+    
+    function hideID() {
+        collScope('tr').each(function() {
+            $(this).find('td').eq(0).hide()
+            $(this).find('th').eq(0).hide()
+        })
     }
     this.setupNewRow = function() {
         collScope('a.new-row').live('click',newRow)
@@ -93,6 +125,8 @@ function coll(n) {
         collScope('a.reload').live('click',reloadTable)
         setupTable()
         setupRename()
+        setupActions()
+        collScope('').resizable().draggable()
     }
     this.reload = setupTable
     return this;
@@ -187,3 +221,17 @@ function setupMasonry() {
 //      "sAjaxSource": "/table"
 //  } );
 // } );
+
+function hideID() {
+    $('tr').each(function() {
+        $(this).find('td').eq(0).hide()
+        $(this).find('th').eq(0).hide()
+    })
+}
+
+
+$(function() {
+    $('tr').each(function() {
+        $(this).find('td').eq(0).hide()
+    })
+})
