@@ -57,10 +57,20 @@ function coll(n) {
     function newColumn() {
         collScope('table tr:first').append(tag("th",textInput('newField')))
     }
+    
+    function setupTable() {
+        collScope('table').dataTable( {
+    		"bProcessing": true,
+    		"bServerSide": true,
+    
+    		"sAjaxSource": "/table2?coll="+collName
+    	} );
+    }
     this.setupNewRow = function() {
         collScope('a.new-row').live('click',newRow)
         collScope('a.new-column').live('click',newColumn)
         collScope('a.reload').live('click',reloadTable)
+        setupTable()
     }
     this.reload = reloadTable
     return this;
@@ -119,10 +129,20 @@ $(function() {
 })
 
 $(setupCellEdit)
+// 
+// $(function() {
+//     $('#colls').masonry({
+//         columnWidth: 200, 
+//         itemSelector: '.collection'
+//     })
+// })
 
-$(function() {
-    $('#colls').masonry({
-        columnWidth: 200, 
-        itemSelector: '.collection'
-    })
-})
+//---------------------------
+
+// $(document).ready(function() {
+//  $('.collection').dataTable( {
+//      "bProcessing": true,
+//      "bServerSide": true,
+//      "sAjaxSource": "/table"
+//  } );
+// } );
