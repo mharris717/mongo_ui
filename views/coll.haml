@@ -1,15 +1,17 @@
-%html
-  %head
-    %script{:src => "jquery.js"}
-    %script{:src => "jquery-ui.js"}
-    %script{:src => "jquery.form.js"}
-    %script{:src => "jquery.masonry.js"}
-    %script{:src => "jquery.dataTables.js"}
-    %script{:src => "run.js"}
-    %link{:rel => 'stylesheet', :href => "table.css"}
-  %body
-    %a.reload-all{:href => "#"} Reload All
-    #colls
-      - @colls.each do |coll|
-        .collection{:id => coll.name}
-          = haml(:table, :locals => {:coll => coll})
+%h2= coll.name
+%a.new-row{:href => '#'} New Row
+%a.new-column{:href => '#'} New Column
+%a.reload{:href => '#'} Reload
+%a{:href => "/table?coll="+coll.name} Open
+%form{:action => '/new_row'}
+  %table{'data-coll' => coll.name, 'data-object-id' => coll.object_id}
+    %thead
+      %tr
+        - coll.keys.each do |k|
+          %th= k
+    %tbody
+      - coll.find.to_a[0..0].each do |r|
+        %tr{'data-row-id' => r['_id'], 'data-abc' => 52}
+          - coll.keys.each do |k|
+            %td.table-cell{:id => "cell_#{rand(1000000000)}", 'data-field-name' => k, 'data-raw-value' => r[k].raw_value}= r[k].mongo_inspect
+            

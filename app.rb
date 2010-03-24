@@ -404,7 +404,7 @@ end
 
 myget "/" do
   @colls = Workspace.instance.colls
-  haml :coll
+  haml :db
 end
 
 myget '/new_row' do
@@ -423,7 +423,7 @@ myget '/table' do
     attachment "#{params[:coll]}.csv"
     coll.to_csv
   else
-    haml :table, :locals => {:coll => coll}
+    haml :coll, :locals => {:coll => coll}
   end
 end
 
