@@ -23,9 +23,11 @@ def load_players!
   c.remove
   FasterCSV.foreach("nlasl2.csv", :headers => true) do |row|
     c.save(:name => row['PLAYER'], :position => row['POS'], :value => row['$$$'].to_s[1..-1].to_i, :team => row['Winner'], :bid => row['Winner $'].to_i, :rank => (i+=1))
-    return if i > 100
+    return if i >= 200
   end
 end
 load_players!
+
+db.collections.reject { |x| x.name == 'players' }.each { |x| x.drop }
 
 # raise db.collection('players').scope_in(:name => [/wright/i,/hanley/i,'Ramirez, Hanley']).find.map { |x| x['name'] }.inspect

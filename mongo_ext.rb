@@ -15,13 +15,23 @@ class Mongo::DB
   end
 end
 
+class Object
+  def each_size
+    res = 0
+    each { |x| res += 1 }
+    res
+  end
+end
+
 class Mongo::Collection
-  # alias_method :old_find, :find
-  # def find(*args)
-  #   puts "find #{args.inspect}"
-  #   #bt
-  #   old_find(*args)
-  # end
+  alias_method :old_find, :find
+  def find(*args)
+    
+    #bt
+    res = old_find(*args)
+    puts "#{name} find #{args.inspect}   #{res.count}"
+    res
+  end
   def keys
     find.map { |x| x.keys }.flatten.uniq.sort.reject { |x| x.to_s[0..0] == '_' }
   end
@@ -56,6 +66,8 @@ class Mongo::Collection
   def name=(x)
     raise x.to_s
   end
+  def search_str; ''; end
+  def sort_str; ''; end
   #class << self
     alias_method :old_insert, :insert
     alias_method :old_update, :update

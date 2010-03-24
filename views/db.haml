@@ -11,5 +11,5 @@
     %a.reload-all{:href => "#"} Reload All
     #colls
       - @colls.each do |coll|
-        .collection{:id => coll.name}
+        .collection{:id => coll.name, 'data-search-str' => coll.search_str, 'data-sort' => coll.sort_str}
           = haml(:coll, :locals => {:coll => coll})

@@ -58,20 +58,41 @@ function coll(n) {
         collScope('table tr:first').append(tag("th",textInput('newField')))
     }
     
+    function setupRename() {
+        collScope('.title').click(function() {
+            $(this).html('<input type="text" value="' + $(this).text() + '" />')
+            var box = $(this).find("input")
+            box.focus()
+            box.blur(function() {
+                $.get("/rename",{coll: collName, new_name: $(this).val()},function(data) {
+                    collScope('.title').html("<h2>"+data+"</h2>")
+                    window.location.reload()
+                })
+            })
+        })
+    }
+    
     function setupTable() {
-        collScope('table').dataTable( {
+        var ops = {
     		"bProcessing": true,
     		"bServerSide": true,
             "sPaginationType": "full_numbers",
-            fnDrawCallback: function() { setTimeout(setupMasonry,0) },
+            //fnDrawCallback: function() { setTimeout(setupMasonry,0) },
     		"sAjaxSource": "/table2?coll="+collName
-    	} );
+    	}
+    	var ss = collScope('').attr('data-search-str')
+    	if (ss != 'undefined' && ss != '' && ss != undefined) {
+    	    ops['oSearch'] = {'sSearch': ss}
+    	}
+    	ops['aaSorting'] = eval(collScope('').attr('data-sort'))
+        collScope('table').dataTable( ops );
     }
     this.setupNewRow = function() {
         collScope('a.new-row').live('click',newRow)
         collScope('a.new-column').live('click',newColumn)
         collScope('a.reload').live('click',reloadTable)
         setupTable()
+        setupRename()
     }
     this.reload = reloadTable
     return this;
@@ -137,10 +158,10 @@ function runRepeat(f) {
 }
 
 function setupMasonry() {
-    // $('#colls').masonry({
-    //     columnWidth: 200, 
-    //     itemSelector: '.collection'
-    // })
+    $('#colls').masonry({
+        columnWidth: 200, 
+        itemSelector: '.collection'
+    })
 }
 
 //---------------------------

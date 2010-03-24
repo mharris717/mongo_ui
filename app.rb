@@ -1,5 +1,6 @@
+$db_name ||= "test-db11"
 def db
-  Mongo::Connection.new.db('test-db9')
+  Mongo::Connection.new.db($db_name)
 end
 
 require File.dirname(__FILE__) + "/requires"
@@ -77,4 +78,9 @@ get "/copy" do
   UserCollection.create!(:coll_name => new_name, :base_coll_name => coll.name)
   puts "UC count #{a} #{UserCollection.all.size}"
   redirect "/"
+end
+
+get "/rename" do
+  coll.rename(params[:new_name])
+  params[:new_name]
 end

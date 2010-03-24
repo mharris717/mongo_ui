@@ -1,11 +1,12 @@
-%h2= coll.name
+.title
+  %h2= coll.name
 %a.new-row{:href => '#'} New Row
 %a.new-column{:href => '#'} New Column
 %a.reload{:href => '#'} Reload
-%a{:href => "/table?coll="+coll.name} Open
-%a{:href => "/copy?coll="+coll.name} Copy
+%a{:href => "/table?coll="+coll.name.to_s} Open
+%a{:href => "/copy?coll="+coll.name.to_s} Copy
 %form{:action => '/new_row'}
-  %table{'data-coll' => coll.name, 'data-object-id' => coll.object_id}
+  %table{'data-coll' => coll.name, 'data-object-id' => coll.object_id, 'data-search-str' => coll.search_str, 'data-sort' => coll.sort_str}
     %thead
       %tr
         - coll.keys.each do |k|

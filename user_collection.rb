@@ -1,14 +1,19 @@
 require 'mongo_mapper'
-MongoMapper.database = 'test-db9'
+MongoMapper.database = $db_name
 class UserCollection
   include MongoMapper::Document
   key :sort_conditions
   key :filter_conditions
   key :coll_name
   key :base_coll_name
+  key :search_str
+  def set_search_str(str)
+    self.search_str = str
+    self.filter_conditions = SearchStr.new(:str => str).selector
+  end
   def to_coll
     #MockColl.new(:sort_conditions => sort_conditions, :name => coll_name, :base_coll_name => base_coll_name)
-    MockColl.from_hash_safe(:user_coll => self, :sort_conditions => sort_conditions, :filter_conditions => filter_conditions, :coll_name => coll_name, :base_coll_name => base_coll_name)
+    MockColl.from_hash_safe(:user_coll => self, :sort_conditions => sort_conditions, :filter_conditions => filter_conditions, :coll_name => coll_name, :base_coll_name => base_coll_name, :search_str => search_str)
   end
   def self.to_colls
     all.map { |x| x.to_coll }
@@ -16,7 +21,7 @@ class UserCollection
 end
 
 class MockColl
-  attr_accessor :sort_conditions, :filter_conditions, :coll_name, :base_coll_name, :user_coll
+  attr_accessor :sort_conditions, :filter_conditions, :coll_name, :base_coll_name, :user_coll, :search_str
   include FromHash
   def raw_base_coll
     db.collection(base_coll_name)
@@ -28,7 +33,6 @@ class MockColl
     (filter_conditions && !filter_conditions.empty?) ? raw_base_coll.scope_eq(filter_conditions) : raw_base_coll
   end
   def find(selector={},ops={})
-    puts "filter_conditions #{filter_conditions.inspect}"
     sorted_base_coll.find(selector,ops)
   rescue
     []
@@ -41,6 +45,14 @@ class MockColl
   def name; coll_name; end
   def method_missing(sym,*args,&b)
     sorted_base_coll.send(sym,*args,&b)
+  end
+  def rename(new_name)
+    user_coll.update_attributes(:coll_name => new_name)
+  end
+  def sort_str
+    return '' unless sort_conditions && sort_conditions.size > 0
+    k = keys.index(sort_conditions.first.first)
+    "[[#{k},'#{sort_conditions.first.last}']]"
   end
 end
 
