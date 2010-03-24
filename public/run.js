@@ -94,7 +94,7 @@ function coll(n) {
         setupTable()
         setupRename()
     }
-    this.reload = reloadTable
+    this.reload = setupTable
     return this;
 }
 
@@ -114,27 +114,41 @@ $(function() {
     })
 })
 
+function getIndex(obj,array) {
+    for(var i=0;i<array.length;i++) {
+        if (obj == array[i]) {
+            return i;
+        }
+    }
+    alert('didnt find')
+}
+
 
 function setupCellEdit() {
     function editCell(cell) {
-        cell.html("<input type='text' value='" + cell.attr('data-raw-value') + "'/>")
+        var val = cell.attr('data-raw-value')
+        val = cell.text()
+        cell.html("<input type='text' value='" + val + "'/>")
         cell.find('input').focus()
         var row = cell.parent()
         var table = row.parent().parent()
-        var row_id = row.attr('data-row-id')
+        var row_id = row.find('td:first').text()
+        var column_index = getIndex(cell[0],row.find('td'))
+        var field_name = table.find('tr:first th').eq(column_index).text()
+        //alert(row.find('td').length)
         cell.find('input').blur(function() {
-            var ops = {coll: table.attr('data-coll'), row_id: row_id, field_name: cell.attr('data-field-name'), field_value: $(this).val()}
+            var ops = {coll: table.attr('data-coll'), row_id: row_id, field_name: field_name, field_value: $(this).val()}
             $.get("/update_row",ops,function(data) {
                 console.debug(data)
                 cell.text(data)
-                reloadAll()
+                //reloadAll()
             })
             
         })
     }
     
     
-    $('.table-cell').live('click',function() {
+    $('.collection td').live('click',function() {
         editCell($(this))
     })
 }

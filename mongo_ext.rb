@@ -33,7 +33,7 @@ class Mongo::Collection
     res
   end
   def keys
-    find.map { |x| x.keys }.flatten.uniq.sort.reject { |x| x.to_s[0..0] == '_' }
+    ['_id'] + find.map { |x| x.keys }.flatten.uniq.sort.reject { |x| x.to_s[0..0] == '_' }
   end
   def to_csv
     arr = []
