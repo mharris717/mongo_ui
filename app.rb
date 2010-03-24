@@ -1,10 +1,12 @@
+def db
+  Mongo::Connection.new.db('test-db7')
+end
+
 require File.dirname(__FILE__) + "/requires"
 require 'sinatra'
 
 
-def db
-  Mongo::Connection.new.db('test-db7')
-end
+
     
 class Workspace
   class << self
@@ -33,6 +35,14 @@ helpers do
   end
   def get_paginated
   end
+  def print_params!
+    strs = []
+    params.each_sorted_by_key_asc do |k,v|
+      strs << "#{k}: #{v}"
+    end
+    puts strs.join("\n")
+    File.create("log/last_params.txt",strs.join("\n"))
+  end
 end
 
 get "/" do
@@ -60,16 +70,50 @@ get '/table' do
   end
 end
 
-
+class CollData
+  attr_accessor :coll, :params
+  include FromHash
+  fattr(:search_str) { params[:sSearch] }
+  fattr(:search_terms) { search_str.split(" ").map { |x| x.strip }.select { |x| x.present? } }
+  fattr(:find_ops) do
+    {:limit => params[:iDisplayLength].to_i, :skip => params[:iDisplayStart].to_i}
+  end
+  def search_field_hash(term)
+    parts = term.split(':').map { |x| x.strip }
+    if parts.size == 1
+      return {'_allwords' => /#{term}/i}
+    elsif parts.size == 2
+      field, value = *parts
+      {field => /#{value}/i}
+    elsif parts.size == 3
+      field, op, value = *parts
+      {field => {"$#{op}" => value.to_f}}
+    else
+      raise "bad"
+    end
+  end
+  def selector
+    return {} unless search_str.present?
+    search_terms.inject({}) do |h,term|
+      h.merge(search_field_hash(term))
+    end
+  end
+  fattr(:rows) do
+    coll.find(selector,find_ops).to_a
+  end
+  fattr(:keys){ coll.keys }
+  fattr(:data) do
+    rows.map do |row|
+      keys.map { |k| row[k].to_thing }
+    end
+  end
+  fattr(:json_str) do
+    {:sEcho => params[:sEcho], :iTotalRecords => coll.find.count, :iTotalDisplayRecords => rows.size, :aaData => data}.to_json
+  end
+end
 
 get "/table2" do
-  find_ops = {:limit => params[:iDisplayLength].to_i, :skip => params[:iDisplayStart].to_i}
-  puts "before rows"
-  rows = coll.find({},find_ops).to_a
-  puts "after rows"
-  ks = coll.keys
-  data = rows.map do |row|
-    ks.map { |k| row[k].to_thing }
-  end
-  {:sEcho => params[:sEcho], :iTotalRecords => coll.find.count, :iTotalDisplayRecords => rows.size, :aaData => data}.to_json.tap { |x| puts x.inspect }
+  print_params!
+  manager = CollData.new(:coll => coll, :params => params)
+  manager.json_str
 end

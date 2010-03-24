@@ -56,4 +56,16 @@ class Mongo::Collection
   def name=(x)
     raise x.to_s
   end
+  #class << self
+    alias_method :old_insert, :insert
+    alias_method :old_update, :update
+    def insert(h,*args)
+      h['_allwords'] = h.without_keys('_allwords').values.join("") + 'abc'
+      old_insert(h,*args)
+    end
+    def update(h,*args)
+      h['_allwords'] = h.without_keys('_allwords').values.join("") + 'abc'
+      old_update(h,*args)
+    end
+  #end
 end
