@@ -16,6 +16,8 @@ class Workspace
   def colls
     res = db.collections.reject { |x| x.name == 'system.indexes' || x.name =~ /user_/ }
     res += UserCollection.to_colls
+    res += GroupedUserCollection.to_colls
+    #raise res.size.to_s
     res
   end  
   def get_coll(n)
@@ -48,6 +50,7 @@ helpers do
 end
 
 get "/" do
+  puts "COL SIZE: " + db.collections.map { |x| x.name }.inspect
   @colls = Workspace.instance!.colls
   UserCollection.all.each { |x| puts x.inspect }
   haml :db

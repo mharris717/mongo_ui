@@ -33,3 +33,14 @@ db.collections.reject { |x| x.name == 'players' }.each { |x| x.drop }
 #db.collection('abc').save(:a => [:b,:c], :d => {:e => :f, :g => :h})
 
 # raise db.collection('players').scope_in(:name => [/wright/i,/hanley/i,'Ramirez, Hanley']).find.map { |x| x['name'] }.inspect
+
+puts "#{UserCollection.all.size} UserCollections"
+UserCollection.all.each { |x| x.destroy }
+GroupedUserCollection.all.each { |x| x.destroy }
+
+# UserCollection.create!(:coll_name => 'PlayersbyValue', :base_coll_name => 'players', :sort_conditions => [['value',:desc]])
+# UserCollection.create!(:coll_name => 'PandaPlayers', :base_coll_name => 'players', :filter_conditions => {:team => 'Panda'})
+# UserCollection.create!(:coll_name => 'AvailablePlayers', :base_coll_name => 'players', :filter_conditions => {:team => nil})
+
+GroupedUserCollection.new(:coll_name => 'teams', :base_coll_name => 'players', :group_key => 'team', :sum_field => 'value').save! 
+GroupedUserCollection.new(:coll_name => 'teams2', :base_coll_name => 'players', :group_key => 'team', :sum_field => 'bid').save! 

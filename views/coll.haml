@@ -14,7 +14,7 @@
           %th= k.to_s.humanize
     %tbody
       - coll.find.to_a[0..0].each do |r|
-        %tr{'data-row-id' => r['_id']}
+        %tr{'data-row-id' => r['_id'].to_s}
           - coll.keys.each do |k|
             %td.table-cell{:id => "cell_#{rand(1000000000)}", 'data-field-name' => k, 'data-raw-value' => r[k].raw_value}= r[k].mongo_inspect
             

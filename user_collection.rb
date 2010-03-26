@@ -20,6 +20,53 @@ class UserCollection
   end
 end
 
+
+class GroupedUserCollection
+  include MongoMapper::Document
+  key :coll_name
+  key :base_coll_name
+  key :group_key
+  key :sum_field
+  def to_coll
+    MockGroupColl.from_hash_safe(attributes)
+  end
+  def self.to_colls
+    all.map { |x| x.to_coll }
+  end
+end
+
+class MockGroupColl
+  attr_accessor :coll_name, :base_coll_name, :group_key, :sum_field
+  fattr(:groups_hash) do
+    db.collection(base_coll_name).sum_by(:key => group_key, :sum_field => sum_field)
+  end
+  def group_rows
+    res = []
+    groups_hash.each do |k,v|
+      res << {'_id' => rand(10000000000000), 'team' => k, 'value' => v}
+    end
+    res
+  end
+  def find(selector={}, ops={})
+    res = group_rows
+    res = res.sort_by { |x| x[ops[:sort].first.first] || '' } if ops[:sort]
+    res = res.reverse if ops[:sort] && ops[:sort].first.last.to_s == 'desc'
+    res
+  end
+  def name
+    coll_name
+  end
+  def search_str; ''; end
+  def sort_str; ''; end
+  def keys; ['_id','team','value'] end
+end
+
+class Array
+  def count
+    size
+  end
+end
+
 class MockColl
   attr_accessor :sort_conditions, :filter_conditions, :coll_name, :base_coll_name, :user_coll, :search_str
   include FromHash
@@ -38,8 +85,6 @@ class MockColl
     []
   end
   def keys
-    #eval_loop
-    #puts "self #{self.class} #{self.coll_name}, base #{base_coll.class} #{base_coll.name}"
     raw_base_coll.keys
   end
   def name; coll_name; end
@@ -56,9 +101,5 @@ class MockColl
   end
 end
 
-puts "#{UserCollection.all.size} UserCollections"
-UserCollection.all.each { |x| x.destroy }
-# UserCollection.create!(:coll_name => 'PlayersbyValue', :base_coll_name => 'players', :sort_conditions => [['value',:desc]])
-# UserCollection.create!(:coll_name => 'PandaPlayers', :base_coll_name => 'players', :filter_conditions => {:team => 'Panda'})
-# UserCollection.create!(:coll_name => 'AvailablePlayers', :base_coll_name => 'players', :filter_conditions => {:team => nil})
 
+ 
