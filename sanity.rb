@@ -15,4 +15,4 @@ assert_mongo_value "{1 => 2}", {1 => 2}
 a = {1 => 2, 3 => 4}.map_sorted_by_key_asc { |k,v| v }
 assert_equal a,[2,4]
 
-assert_equal GroupedUserCollection.all.size, 2
+assert_equal GroupedUserCollection.all.size, 1

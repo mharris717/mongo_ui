@@ -1,5 +1,7 @@
 def mongo_value(v)
-  if v[0..0] == '['
+  if v.kind_of?(Time)
+    v
+  elsif v[0..0] == '['
     #v[1...-1].split(",").map { |x| x.tmo }
     eval(v).map { |x| x.tmo }
   elsif v[0..0] == '{'

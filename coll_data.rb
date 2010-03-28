@@ -52,7 +52,7 @@ class CollData
     SearchStr.new(:str => search_str).selector
   end
   fattr(:rows) do
-    coll.find(selector,find_ops).to_a
+    coll.find(selector,find_ops).tap { |x| puts "Find: #{x.class}" }.to_a.tap { |x| puts "Rows: #{x.inspect}" }
   end
   fattr(:unpaginated_count) do
     coll.find(selector,{}).count

@@ -45,7 +45,8 @@ class Mongo::Collection
     arr.join("\n")
   end
   def find_or_create(ops)
-    return if find_one(ops)
+    res = find_one(ops)
+    return res if res
     save(ops)
   end
   def update_row(row_id,fields)

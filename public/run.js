@@ -82,7 +82,17 @@ function coll(n) {
             //"sDom": 'T<"clear">lfrtip', 
           //  'aoColumns': [{ "bVisible": false },null,null,null,null,null,null],
             //fnDrawCallback: function() { setTimeout(setupMasonry,0) },
-            fnDrawCallback: hideID,
+            fnDrawCallback: function() {
+                hideID()
+                if (collScope('table tr').length == 1) {
+                    alert('sup')
+                    var row_id = collScope('table tr td').eq(0).text()
+                    $.get('/cell_edit',{row_id: row_id, coll: collScope('table').attr('data-coll')},function(data) {
+                        $('#content').attr('src',data)
+                       // ..alert(data)
+                    })
+                }
+            },
     		"sAjaxSource": "/table2?coll="+collName
     	}
     	var ss = collScope('').attr('data-search-str')
@@ -119,6 +129,9 @@ function coll(n) {
             $(this).find('th').eq(0).hide()
         })
     }
+    function savePosition(event,ui) {
+        alert(ui.position.top)
+    }
     this.setupNewRow = function() {
         collScope('a.new-row').live('click',newRow)
         collScope('a.new-column').live('click',newColumn)
@@ -126,7 +139,7 @@ function coll(n) {
         setupTable()
         setupRename()
         setupActions()
-        collScope('').resizable().draggable()
+        collScope('').resizable().draggable({stop: savePosition})
     }
     this.reload = setupTable
     return this;
@@ -169,6 +182,10 @@ function setupCellEdit() {
         var row_id = row.find('td:first').text()
         var column_index = getIndex(cell[0],row.find('td'))
         var field_name = table.find('tr:first th').eq(column_index).text()
+        $.get('/cell_edit',{row_id: row_id, coll: table.attr('data-coll')},function(data) {
+            $('#content').attr('src',data)
+           // ..alert(data)
+        })
         //alert(row.find('td').length)
         cell.find('input').blur(function() {
             var ops = {coll: table.attr('data-coll'), row_id: row_id, field_name: field_name, field_value: $(this).val()}

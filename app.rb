@@ -1,4 +1,4 @@
-$db_name ||= "test-db11"
+$db_name ||= "test-db16"
 def db
   Mongo::Connection.new.db($db_name)
 end
@@ -16,7 +16,11 @@ class Workspace
   def colls
     res = db.collections.reject { |x| x.name == 'system.indexes' || x.name =~ /user_/ }
     res += UserCollection.to_colls
-    res += GroupedUserCollection.to_colls
+    # u = UserCollection.find_one(:coll_name => 'recent') 
+    #  u.filter_conditions = {:updated_at => {'$gt' => 30.minutes.ago}}
+    #  u.save!
+    #res += GroupedUserCollection.to_colls
+    res << TeamPosCollection.new
     #raise res.size.to_s
     res
   end  
@@ -47,6 +51,10 @@ helpers do
     res += "</select>"
     res
   end
+  def coll_style(c)
+    return "" unless coll.respond_to?(:position)
+    "top: #{c.position[:top]}; left: #{c.position[:left]}"
+  end
 end
 
 get "/" do
@@ -62,7 +70,7 @@ get '/new_row' do
 end
 
 get '/update_row' do
-  coll.update_row(params['row_id'], params['field_name'].to_s.downcase => params['field_value'])
+  coll.update_row(params['row_id'], params['field_name'].to_s.downcase => params['field_value'], 'updated_at' => Time.now)
   params['field_value']
 end
 
@@ -94,4 +102,19 @@ end
 get "/rename" do
   coll.rename(params[:new_name])
   params[:new_name]
+end
+
+def lucky_page(name)
+  require 'open-uri'
+  url = "http://www.google.com/search?q=fangraphs #{name}&btnI=Im+Feeling+Lucky".gsub(/ /,"+")
+  puts url
+  url
+  #puts url
+  #open(url) { |f| f.read }
+end
+
+get '/cell_edit' do
+  row = coll.find_one(Mongo::ObjectID.from_string(params[:row_id]))
+  player = row['name']
+  lucky_page(player)
 end

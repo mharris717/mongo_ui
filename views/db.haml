@@ -2,9 +2,10 @@
   %head
     %title SUPERMAN
     %script{:src => "jquery.js"}
-    - if false
-      %script{:src => "jquery-ui.js"}
-    %script{:src => "http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"}
+    - if true
+      %script{:src => "jquery-ui.min.js"}
+    - else
+      %script{:src => "http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"}
     %script{:src => "jquery.form.js"}
     %script{:src => "jquery.masonry.js"}
     %script{:src => "jquery.dataTables.js"}
@@ -22,4 +23,5 @@
       - @colls.each do |coll|
         .collection{:id => coll.name, 'data-search-str' => coll.search_str, 'data-sort' => coll.sort_str}
           = haml(:coll, :locals => {:coll => coll})
-          
+    - if false
+      %iframe#content content

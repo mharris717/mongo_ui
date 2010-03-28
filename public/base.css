@@ -12,7 +12,7 @@ th {
     font-size: 0.7em;
 }
 
-.dataTables_info, .dataTables_lendgth, .dataTabfles_paginate {
+.dataTables_insfo, .dataTables_lendgth, .dataTabfles_paginate {
     display: none;
 }
 
@@ -66,4 +66,12 @@ tr td:first {
 .collection .dataTables_length {
     position: absolute;
     left: 142px;
+}
+
+#content {
+    height: 900px;
+    width: 700px;
+    position: absolute;
+    top: 20px;
+    left: 600px;
 }
