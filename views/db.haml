@@ -21,7 +21,11 @@
       %a.reload-all{:href => "#"} Reload All
     #colls
       - @colls.each do |coll|
-        .collection{:id => coll.name, 'data-search-str' => coll.search_str, 'data-sort' => coll.sort_str}
+        .collection{:id => coll.name, 'data-search-str' => coll.search_str, 'data-sort' => coll.sort_str, 'data-top' => get_position(coll)[:top], 'data-left' => get_position(coll)[:left]}
           = haml(:coll, :locals => {:coll => coll})
+        %br
+        %br
+        %br
+        %br
     - if false
       %iframe#content content

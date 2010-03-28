@@ -113,10 +113,15 @@ function coll(n) {
     
     function search() {
         collScope('.dataTables_filter input').show()
+        collScope('.actions').after(collScope('.dataTables_filter'))
+    }
+    
+    function pagesize() {
+        collScope('.dataTables_length').show()
     }
     
     function setupActions() {
-        var h = {'copy': copy, 'search': search}
+        var h = {'copy': copy, 'search': search, 'pagesize': pagesize}
         collScope('.actions select').change(function() {
             var val = $(this).find('option:selected').val()
             h[val]()
@@ -129,8 +134,24 @@ function coll(n) {
             $(this).find('th').eq(0).hide()
         })
     }
+    function savePositionInner(top,left) {
+        $.get("/save_position",{top: top, left: left, coll: collName},function(data) {
+            
+        })
+    }
+    
     function savePosition(event,ui) {
-        alert(ui.position.top)
+        return savePositionInner(ui.offset.top,ui.offset.left)
+    }
+    
+    function reposition() {
+        if (collScope('').attr('data-top')) {
+            collScope('').css('position','absolute').css('top',collScope('').attr('data-top')).css('left',collScope('').attr('data-left'))
+        }
+        else {
+            var pos = collScope('').position()
+            savePositionInner(pos.top,pos.left)
+        }
     }
     this.setupNewRow = function() {
         collScope('a.new-row').live('click',newRow)
@@ -139,7 +160,8 @@ function coll(n) {
         setupTable()
         setupRename()
         setupActions()
-        collScope('').resizable().draggable({stop: savePosition})
+        collScope('').draggable({stop: savePosition})
+        reposition()
     }
     this.reload = setupTable
     return this;

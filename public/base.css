@@ -1,5 +1,5 @@
 .collection {
-    max-width: 500px;
+    max-width: 700px;
     border-widdth: 5px;
     border-styfle: soldid;
 }
@@ -12,9 +12,15 @@ th {
     font-size: 0.7em;
 }
 
-.dataTables_insfo, .dataTables_lendgth, .dataTabfles_paginate {
+.dataTables_insfo, .dataTables_length, .dataTabfles_paginate {
     display: none;
 }
+
+.dataTables_info {
+    font-size: 0.3em;
+}
+
+
 
 .dataTables_length {
     position: absolute;
@@ -23,12 +29,19 @@ th {
     left: 120px;
 }
 
-.dataTables_filter {
+.dataTables_fsilter {
     position: absolute;
     width: 200px;
     top: -23px;
     left: 150px;
     font-size: 1px;
+}
+.dataTables_filter {
+    font-size: 1px;
+}
+
+.dataTables_filter input {
+    float: left;
 }
 
 .dataTables_paginate {
@@ -54,13 +67,14 @@ tr td:first {
     display: none;
 }
 
+
 .dataTables_filter input {
     display: none;
 }
 
 .collection .actions {
-    position: absolute;
-    left: 65px;
+    position: relative;
+    top: -3px;
 }
 
 .collection .dataTables_length {
@@ -74,4 +88,20 @@ tr td:first {
     position: absolute;
     top: 20px;
     left: 600px;
+}
+
+.collection .heading {
+    background-color: #DDDDDD;
+}
+
+.collection {
+    border-top-style: solid;
+    border-top-width: 1px;
+    border-top-color: #CCCCCC;
+    border-left-style: solid;
+    border-left-width: 1px;
+    border-left-color: #CCCCCC;
+    border-right-style: solid;
+    border-right-width: 1px;
+    border-right-color: #CCCCCC;
 }

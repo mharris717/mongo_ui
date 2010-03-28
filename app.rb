@@ -7,11 +7,20 @@ require File.dirname(__FILE__) + "/requires"
 require 'sinatra'
 
 
-
+class WorkspaceCollection
+  include MongoMapper::EmbeddedDocument
+  key :coll_name
+end
     
 class Workspace
   class << self
-    fattr(:instance) { new }
+    def create!
+      res = new
+      res.collections = ['players']
+    end
+    fattr(:instance) do
+      new
+    end
   end
   def colls
     res = db.collections.reject { |x| x.name == 'system.indexes' || x.name =~ /user_/ }
@@ -45,7 +54,7 @@ helpers do
   end
   def table_options_dropdown
     res = "<select>"
-    ['','copy','search'].each do |action|
+    ['','copy','search','pagesize'].each do |action|
       res += "<option value='#{action}'>#{action.humanize}</option>"
     end
     res += "</select>"
@@ -54,6 +63,13 @@ helpers do
   def coll_style(c)
     return "" unless coll.respond_to?(:position)
     "top: #{c.position[:top]}; left: #{c.position[:left]}"
+  end
+  def get_position(coll)
+    return {} unless coll.respond_to?(:user_coll)
+    return {} unless coll.user_coll.position
+    top = coll.user_coll.position['top'].to_s + "px"
+    left = coll.user_coll.position['left'].to_s + "px"
+    {:top => top, :left => left}
   end
 end
 
@@ -117,4 +133,11 @@ get '/cell_edit' do
   row = coll.find_one(Mongo::ObjectID.from_string(params[:row_id]))
   player = row['name']
   lucky_page(player)
+end
+
+get '/save_position' do
+  if coll.respond_to?(:user_coll)
+    coll.user_coll.position = {'top' => params[:top], 'left' => params['left']}
+    coll.user_coll.save!
+  end
 end

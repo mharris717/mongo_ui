@@ -33,7 +33,9 @@ class Mongo::Collection
     res
   end
   def keys
-    ['_id'] + find.map { |x| x.keys }.flatten.uniq.sort.reject { |x| x.to_s[0..0] == '_' }
+    res = ['_id'] + find.map { |x| x.keys }.flatten.uniq.sort.reject { |x| x.to_s[0..0] == '_' } - ['position']
+    raise res.inspect if res.select { |x| x =~ /updated/i }.size > 1
+    res
   end
   def to_csv
     arr = []

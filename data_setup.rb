@@ -46,33 +46,45 @@ def set_pos_list!
   end
 end
 
-#load_players!
-#set_pos_list!
-
-c = db.collection('players')
-c.find(:team => /./).each do |p|
-  c.find(:name => p['name']).each do |newp|
-    if newp['team'].blank?
-     c.remove(newp)
-     puts "removing #{newp.inspect}" 
-    end
+def fix_data!
+  c = db.collection('players')
+  c.find.each do |player|
+    player.delete('updated at')
+    c.save(player)
   end
 end
-db.collections.reject { |x| x.name == 'players' }.each { |x| x.drop }
+    
 
-#db.collection('abc').save(:a => [:b,:c], :d => {:e => :f, :g => :h})
+#load_players!
+#set_pos_list!
+# fix_data!
 
-# raise db.collection('players').scope_in(:name => [/wright/i,/hanley/i,'Ramirez, Hanley']).find.map { |x| x['name'] }.inspect
+if false
+  c = db.collection('players')
+  c.find(:team => /./).each do |p|
+    c.find(:name => p['name']).each do |newp|
+      if newp['team'].blank?
+       c.remove(newp)
+       puts "removing #{newp.inspect}" 
+      end
+    end
+  end
+  db.collections.reject { |x| x.name == 'players' }.each { |x| x.drop }
 
-puts "#{UserCollection.all.size} UserCollections"
-UserCollection.all.each { |x| x.destroy }
-GroupedUserCollection.all.each { |x| x.destroy }
+  #db.collection('abc').save(:a => [:b,:c], :d => {:e => :f, :g => :h})
 
-# UserCollection.create!(:coll_name => 'PlayersbyValue', :base_coll_name => 'players', :sort_conditions => [['value',:desc]])
-# UserCollection.create!(:coll_name => 'PandaPlayers', :base_coll_name => 'players', :filter_conditions => {:team => 'Panda'})
-UserCollection.create!(:coll_name => 'available', :base_coll_name => 'players', :filter_conditions => {:team => nil}, :sort_conditions => [['rank',:asc]])
-UserCollection.create!(:coll_name => 'panda', :base_coll_name => 'players', :filter_conditions => {:team => 'panda'})
-# UserCollection.create!(:coll_name => 'recent', :base_coll_name => 'players', :filter_conditions => {:updated_at => {'$gt' => 30.minutes.ago}})
+  # raise db.collection('players').scope_in(:name => [/wright/i,/hanley/i,'Ramirez, Hanley']).find.map { |x| x['name'] }.inspect
 
-#GroupedUserCollection.new(:coll_name => 'teams', :base_coll_name => 'players', :group_key => 'team', :sum_field => 'value').save! 
-GroupedUserCollection.new(:coll_name => 'teams2', :base_coll_name => 'players', :group_key => 'team', :sum_fields => ['hr','rbi']).save! 
+  puts "#{UserCollection.all.size} UserCollections"
+  UserCollection.all.each { |x| x.destroy }
+  GroupedUserCollection.all.each { |x| x.destroy }
+
+  # UserCollection.create!(:coll_name => 'PlayersbyValue', :base_coll_name => 'players', :sort_conditions => [['value',:desc]])
+  # UserCollection.create!(:coll_name => 'PandaPlayers', :base_coll_name => 'players', :filter_conditions => {:team => 'Panda'})
+  UserCollection.create!(:coll_name => 'available', :base_coll_name => 'players', :filter_conditions => {:team => nil}, :sort_conditions => [['rank',:asc]])
+  UserCollection.create!(:coll_name => 'panda', :base_coll_name => 'players', :filter_conditions => {:team => 'panda'})
+  # UserCollection.create!(:coll_name => 'recent', :base_coll_name => 'players', :filter_conditions => {:updated_at => {'$gt' => 30.minutes.ago}})
+
+  #GroupedUserCollection.new(:coll_name => 'teams', :base_coll_name => 'players', :group_key => 'team', :sum_field => 'value').save! 
+  GroupedUserCollection.new(:coll_name => 'teams2', :base_coll_name => 'players', :group_key => 'team', :sum_fields => ['hr','rbi']).save!
+end

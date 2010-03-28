@@ -1,11 +1,12 @@
-%span.title= coll.name.humanize
-%a.new-row{:href => '#'} New Row
-- if false
-  %a.new-column{:href => '#'} New Column
-  %a.reload{:href => '#'} Reload
-  %a{:href => "/table?coll="+coll.name.to_s} Open
-  %a{:href => "/copy?coll="+coll.name.to_s} Copy
-%span.actions= table_options_dropdown
+.heading
+  %span.title= coll.name.humanize
+  - if false
+    %a.new-row{:href => '#'} New Row
+  - if false
+    %a.new-column{:href => '#'} New Column
+    %a.reload{:href => '#'} Reload
+    %a{:href => "/table?coll="+coll.name.to_s} Open
+  %span.actions= table_options_dropdown
 %form{:action => '/new_row'}
   %table{'data-coll' => coll.name, 'data-object-id' => coll.object_id, 'data-search-str' => coll.search_str, 'data-sort' => coll.sort_str}
     %thead
