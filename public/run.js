@@ -217,26 +217,58 @@ function array_join(arr,str) {
     
 }
 
-function collCell(t) {
-    var td = t
+function collCell(t,r) {
+    var initial_root_td = r
+    var root_td = r
+    var td = $(t)
+    if (root_td == undefined) root_td = td
     var val = td.text()
-    var row = td.parent()
+    var row = root_td.parent()
     var table = row.parent().parent()
     var coll_name = table.attr('data-coll')
     var c = coll(coll_name)
     var row_id = row.find('td:first').text()
-    var column_index = getIndex(td[0],row.find('td'))
+    var column_index = getIndex(root_td[0],row.find('td'))
     var field_name = table.find('tr:first th').eq(column_index).text()
     var saved_field_info = null
-    function std_entry_field() { return "<input type='text' value='" + val + "'/>" }
+    
+    console.debug("ID: " + td.attr('id'))
+    if (td.attr('id') == undefined || td.attr('id') == '' || td.attr('id') == null) {
+        td.attr('id',''+randID())
+    }
+    
+    console.debug('coll_name '+coll_name+" initial root: "+initial_root_td+" rowid: "+row_id)
+    
+    function getVal() {
+        if (td.find('input').length > 0) {
+            return td.find('input').eq(0).val()
+        }
+        else {
+            return val
+        }
+    }
+    
+    this.getFieldName = function() {
+        return field_name
+    }
+    function std_entry_field() { return "<input type='text' value='" + getVal() + "'/>" }
     
     function arrayFieldVals() {
-        var t = $.map( td.find("input"), function(x) { return '"' + $(x).val() + '"' } )
+        function abc(child) {
+            if (child.find('table').length == 0) {
+                return '"' + child.find('input').val() + '"'
+            }
+            else {
+                return collCell($(child),td).afv()
+            }
+        }
+        var t = $.map( immediateChildren(), function(x) { return abc($(x)) } )
         var inner = array_join(t,",")
         var res = "[" + inner + "]"
         console.debug("afv: " + res)
         return res
     }
+    this.afv = arrayFieldVals
     
     function hashFieldVals() {
         function hashField(t) {
@@ -251,9 +283,10 @@ function collCell(t) {
         console.debug("afv: " + res)
         return res
     }
+    this.hfv = hashFieldVals
     
     function addArrayField() {
-        td.find('table').append(Jaml.render('array-entry-row',{val: ''}))
+        td.find('table').eq(0).append(Jaml.render('array-entry-row',{val: '', parent_id: td.attr('id')}))
     }
     function addHashField() {
         td.find('table').append(Jaml.render('hash-entry-row',{val: '', key: ''}))
@@ -263,9 +296,30 @@ function collCell(t) {
         return td.text();
     }
     
+    function isChild() {
+        return !(initial_root_td == undefined)
+    }
+    
+    function fieldInfoOps() {
+        if (!isChild()) {
+            return {coll: coll_name, row_id: row_id, field: field_name}
+        }
+        else {
+            return {coll: coll_name, row_id: row_id, field: collCell(root_td).getFieldName(), subfield: td.attr('data-key')}
+        }
+    }
+    
+    function immediateChildren() {
+        return $('td.value.'+td.attr('id'))
+    }
+    
+    function immediateChildreng() {
+        return $('td.value.'+td.attr('id'))
+    }
+    
     function withTypeInner(f) {
         console.debug('getting remote field info')
-        $.getJSON("/field_info",{coll: coll_name, row_id: row_id, field: field_name},function(data) {
+        $.getJSON("/field_info",fieldInfoOps(),function(data) {
             saved_field_info = data
             console.debug(data)
             f(data)
@@ -281,33 +335,65 @@ function collCell(t) {
         }
     }
     
+    function getInputHtml(field_info) {
+        if (field_info.field_type == 'Array') {
+            return array_entry(field_info.value,isChild(),td.attr('id'))
+        }
+        else if (field_info.field_type == 'Hash') {
+            return hash_entry(field_info.value)
+        }
+        else {
+            return std_entry_field()
+        }
+    }
+    
+    this.setInputHtml = function() {
+        withType(function(field_info) {
+            td.html(getInputHtml(field_info))
+            td.find('a.add').click(addArrayField)
+        })
+    }
+    
+    function eachInnerTd(f) {
+        td.find("td.value").each(function() {
+            f(collCell(this,root_td))
+        })
+    }
+    
+    this.eachInnerTdRecursive = function(f) {
+        eachInnerTd(function(x) {
+            f(x)
+            x.eachInnerTdRecursive(f)
+        })
+    }
+    
     function editCellInner(field_info) {
         function updateRowOps(val) {
-            return {coll: coll_name, row_id: row_id, field_name: field_name, field_value: val}
+            var res = {coll: coll_name, row_id: row_id, field_name: field_name, field_value: val}
+            console.debug('update row ops ')
+            console.debug(res)
+            return res
         }
+        this.setInputHtml()
+        eachInnerTd(function(x) { x.setInputHtml() })
         if (field_info.field_type == 'Array') {
-            td.html(array_entry(field_info.value))
             td.find('a.save').click(function() {
                 $.get("/update_row", updateRowOps(arrayFieldVals()), function(data) {
-                    td.text(data)
-                    td.attr('data-editing','0')
+                    td.html(data)
                 })
             })
             td.find('a.add').click(addArrayField)
         }
         else if (field_info.field_type == 'Hash') {
-            td.html(hash_entry(field_info.value))
             td.find('a.save').click(function() {
                 $.get("/update_row", updateRowOps(hashFieldVals()), function(data) {
                     td.html(data)
-                    td.attr('data-editing','0')
                 })
             })
             td.find('a.add').click(addHashField)
         }
         else
         {
-            td.html(std_entry_field())
             td.find('input').blur(function() {
                 $.get("/update_row", updateRowOps($(this).val()), function(data) {
                     td.text(data)
@@ -316,19 +402,26 @@ function collCell(t) {
             })
         }
         td.find('input').eq(0).focus()
-        
+        console.debug("imm: " + immediateChildren().length)
         
     }
     
     this.editCell = function() {
+        if (edited) return;
         withType(editCellInner)
+        edited = true
     }
     return this;
 }
+edited = false
 function setupCellEdit() {
     $('.collection td').live('click',function() {
         collCell($(this)).editCell()
     })
+}
+
+function randID() {
+    return parseInt(Math.random() * 1000000000)
 }
 
 // $.get('/cell_edit',{row_id: row_id, coll: table.attr('data-coll')},function(data) {

@@ -13,9 +13,11 @@ helpers do
   fattr(:coll) do
     Workspace.instance.get_coll(params[:coll])
   end
+  fattr(:row_id) { params[:row_id] }
   fattr(:row) do
-    raise "no row" unless params[:row_id]
-    coll.find_one(Mongo::ObjectID.from_string(params[:row_id]))
+    raise "no row" unless row_id
+    puts "Row ID: #{row_id}"
+    coll.find_one(Mongo::ObjectID.from_string(row_id))
   end
   def get_paginated
   end
@@ -63,6 +65,8 @@ end
 get '/update_row' do
   print_params!
   coll.update_row(params['row_id'], params['field_name'].to_s.downcase => params['field_value'], 'updated_at' => Time.now)
+  puts "Updated Row: " + row.inspect + " " + row.map_value { |x| x.class }.inspect
+ # puts row['era'].map { |x| x.class }.inspect
   mongo_value(params['field_value']).mongo_inspect
 end
 
@@ -79,7 +83,7 @@ end
 get "/table2" do
   # print_params!
   manager = CollData.new(:coll => coll, :params => params)
-  manager.json_str.tap { |x| puts "JSON STR"; puts x }
+  manager.json_str#.tap { |x| puts "JSON STR"; puts x }
 end
 
 get "/copy" do
@@ -119,7 +123,15 @@ get '/save_position' do
 end
 
 get '/field_info' do
-  cls = row[params[:field]].class.to_s
+  ps = params.without_keys('keys')
+  File.append("log/field_info.log","#{Time.now} #{ps.inspect}\n")
+  f = row[params[:field]]
+  if params[:subfield].present?
+    sub = params[:subfield]
+    sub = sub.to_i if f.kind_of?(Array)
+    f = f[sub] 
+  end
+  cls = f.class.to_s
   cls = 'Hash' if cls == 'OrderedHash'
-  {'field_type' => cls, 'value' => row[params[:field]]}.to_json.tap { |x| puts "FIELD INFO"; puts x }
+  {'field_type' => cls, 'value' => f}.to_json.tap { |x| File.append("log/field_info.log","#{Time.now} #{x}\n") }
 end

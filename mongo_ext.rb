@@ -56,11 +56,12 @@ class Mongo::Collection
     return res if res
     save(ops)
   end
-  def update_row(row_id,fields)
-    #puts "updating #{row_id} with #{fields.inspect}"
-    #eval_loop
+  def find_by_id(row_id)
     row_id = Mongo::ObjectID.from_string(row_id) if row_id.is_a?(String)
     row = find('_id' => row_id).to_a.first
+  end
+  def update_row(row_id,fields)
+    row = find_by_id(row_id)
     raise "can't find row #{row_id} #{row_id.class} in coll #{name}.  Count is #{find.count} IDs are "+find.to_a.map { |x| x['_id'] }.inspect + "Trying to update with #{fields.inspect}" unless row
     fields.each do |k,v|
       row[k] = mongo_value(v)
