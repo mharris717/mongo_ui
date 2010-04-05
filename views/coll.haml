@@ -1,5 +1,5 @@
 .heading
-  %span.title= coll.name.humanize
+  %span.title= coll.name
   - if false
     %a.new-row{:href => '#'} New Row
   - if false
@@ -12,7 +12,7 @@
     %thead
       %tr
         - coll.keys.each do |k|
-          %th= k.to_s.humanize
+          %th= k.to_s
     %tbody
       - coll.find.to_a[0..0].each do |r|
         %tr{'data-row-id' => r['_id'].to_s}

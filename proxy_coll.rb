@@ -13,7 +13,6 @@ class ProxyColl
   end
   def find(selector={},ops={},&b)
     modify_find_ops(selector,ops)
-#    puts "running find with selector #{selector.inspect} ops #{ops.inspect}"
     coll.find(selector,ops,&b)
   end
 end
@@ -22,6 +21,8 @@ class SortedColl < ProxyColl
   attr_accessor :sort_ops
   def modify_find_ops(selector,ops)
     ops.add_to_array(:sort,*sort_ops)
+    ops[:sort] = ops[:sort].uniq_by { |x| x[0] } if ops[:sort]
+    #raise ops.inspect
   end
   def addl_name
     "Sort by " + sort_ops.map { |x| x.join(" ") }.join(",")

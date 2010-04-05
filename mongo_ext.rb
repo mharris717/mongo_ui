@@ -28,13 +28,18 @@ class Mongo::Collection
   def find(*args)
     
     #bt
+    str = "#{name} find #{args.inspect}"
     res = old_find(*args)
-    puts "#{name} find #{args.inspect}   #{res.count}"
+    puts "#{str} #{res.count}"
     res
   end
   def keys
     res = ['_id'] + find.map { |x| x.keys }.flatten.uniq.sort.reject { |x| x.to_s[0..0] == '_' } - ['position']
     raise res.inspect if res.select { |x| x =~ /updated/i }.size > 1
+    if name == 'players'
+      front = ['_id','name','avg','hr','rbi','sb','bid','value','profit']
+      res = front + (res - front)
+    end
     res
   end
   def to_csv

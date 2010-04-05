@@ -52,7 +52,8 @@ class CollData
     SearchStr.new(:str => search_str).selector
   end
   fattr(:rows) do
-    coll.find(selector,find_ops).tap { |x| puts "Find: #{x.class}" }.to_a.tap { |x| puts "Rows: #{x.inspect}" }
+    puts "searching with #{find_ops.inspect}"
+    coll.find(selector,find_ops).to_a
   end
   fattr(:unpaginated_count) do
     coll.find(selector,{}).count
@@ -76,6 +77,7 @@ class CollData
     u.save!
   end
   fattr(:json_str) do
+    puts "sort_conditions #{sort_terms.inspect}"
     #puts json_hash.without_keys(:aaData).merge(:rows_size => json_hash[:aaData].size).inspect
     save_settings!
     json_hash.to_json

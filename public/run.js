@@ -197,8 +197,11 @@ function setupCellEdit() {
     function editCell(cell) {
         var val = cell.attr('data-raw-value')
         val = cell.text()
-        cell.html("<input type='text' value='" + val + "'/>")
+        cell.html("<input type='text' value='" + val + "'/>" + "<a href='#' class='expand' >e</a>")
         cell.find('input').focus()
+        cell.find('a.expand').click(function() {
+            alert('foo')
+        })
         var row = cell.parent()
         var table = row.parent().parent()
         var row_id = row.find('td:first').text()

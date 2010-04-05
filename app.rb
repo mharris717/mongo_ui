@@ -7,36 +7,7 @@ require File.dirname(__FILE__) + "/requires"
 require 'sinatra'
 
 
-class WorkspaceCollection
-  include MongoMapper::EmbeddedDocument
-  key :coll_name
-end
-    
-class Workspace
-  class << self
-    def create!
-      res = new
-      res.collections = ['players']
-    end
-    fattr(:instance) do
-      new
-    end
-  end
-  def colls
-    res = db.collections.reject { |x| x.name == 'system.indexes' || x.name =~ /user_/ }
-    res += UserCollection.to_colls
-    # u = UserCollection.find_one(:coll_name => 'recent') 
-    #  u.filter_conditions = {:updated_at => {'$gt' => 30.minutes.ago}}
-    #  u.save!
-    #res += GroupedUserCollection.to_colls
-    res << TeamPosCollection.new
-    #raise res.size.to_s
-    res
-  end  
-  def get_coll(n)
-    colls.find { |x| x.name == n }
-  end
-end
+
 
 helpers do
   fattr(:coll) do
@@ -101,16 +72,17 @@ get '/table' do
 end
 
 get "/table2" do
-  print_params!
+  # print_params!
   manager = CollData.new(:coll => coll, :params => params)
-  manager.json_str.tap { |x| puts x }
+  manager.json_str#.tap { |x| puts x }
 end
 
 get "/copy" do
-  new_name = coll.name + "copy#{rand(1000)}"
+  base =  (coll.respond_to?(:base_coll_name) ? coll.base_coll_name : coll.name)
+  new_name = base + "copy#{rand(1000)}"
   puts "creating user collection"
   a = UserCollection.all.size
-  UserCollection.create!(:coll_name => new_name, :base_coll_name => coll.name)
+  UserCollection.create!(:coll_name => new_name, :base_coll_name => base)
   puts "UC count #{a} #{UserCollection.all.size}"
   redirect "/"
 end
@@ -141,3 +113,4 @@ get '/save_position' do
     coll.user_coll.save!
   end
 end
+

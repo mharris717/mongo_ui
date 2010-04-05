@@ -121,3 +121,28 @@ class Hash
     ks.map { |x| self[x] }
   end
 end
+
+class Array
+  def uniq_by
+    h = {}
+    res = []
+    each do |x|
+      k = yield(x)
+      res << x unless h[k]
+      h[k] = true
+    end
+    res
+  end
+end
+
+class Array
+  def average
+    sum.to_f / size.to_f
+  end
+end
+
+class Array
+  def count
+    size
+  end
+end
