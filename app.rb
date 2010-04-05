@@ -13,10 +13,14 @@ helpers do
   fattr(:coll) do
     Workspace.instance.get_coll(params[:coll])
   end
+  fattr(:row) do
+    raise "no row" unless params[:row_id]
+    coll.find_one(Mongo::ObjectID.from_string(params[:row_id]))
+  end
   def get_paginated
   end
   def print_params!
-    strs = []
+    strs = ["#{Time.now}"]
     params.each_sorted_by_key_asc do |k,v|
       strs << "#{k}: #{v}"
     end
@@ -57,8 +61,9 @@ get '/new_row' do
 end
 
 get '/update_row' do
+  print_params!
   coll.update_row(params['row_id'], params['field_name'].to_s.downcase => params['field_value'], 'updated_at' => Time.now)
-  params['field_value']
+  mongo_value(params['field_value']).mongo_inspect
 end
 
 get '/table' do
@@ -74,7 +79,7 @@ end
 get "/table2" do
   # print_params!
   manager = CollData.new(:coll => coll, :params => params)
-  manager.json_str#.tap { |x| puts x }
+  manager.json_str.tap { |x| puts "JSON STR"; puts x }
 end
 
 get "/copy" do
@@ -102,7 +107,6 @@ def lucky_page(name)
 end
 
 get '/cell_edit' do
-  row = coll.find_one(Mongo::ObjectID.from_string(params[:row_id]))
   player = row['name']
   lucky_page(player)
 end
@@ -114,3 +118,8 @@ get '/save_position' do
   end
 end
 
+get '/field_info' do
+  cls = row[params[:field]].class.to_s
+  cls = 'Hash' if cls == 'OrderedHash'
+  {'field_type' => cls, 'value' => row[params[:field]]}.to_json.tap { |x| puts "FIELD INFO"; puts x }
+end

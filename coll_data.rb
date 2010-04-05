@@ -60,7 +60,7 @@ class CollData
   end
   fattr(:keys){ coll.keys }
   fattr(:data) do
-    rows.map { |row| row.values_in_key_order(keys).map { |x| tt(x) } }
+    rows.map { |row| row.values_in_key_order(keys).map { |x| tt(x).mongo_inspect } }
   end
   def tt(x)
     x.blank? ? '_' : x

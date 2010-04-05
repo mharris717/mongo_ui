@@ -59,3 +59,10 @@ class Hash
     "<ul>" + map { |k,v| "<li>#{k.mongo_inspect}: #{v.mongo_inspect}</li>" }.join("") + "</ul>"
   end
 end
+
+class OrderedHash
+  def mongo_inspect
+    "<ul>" + map { |k,v| "<li>#{k.mongo_inspect}: #{v.mongo_inspect}</li>" }.join("") + "</ul>"
+  end
+end
+

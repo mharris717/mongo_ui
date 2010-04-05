@@ -12,6 +12,9 @@ function textInput(n) {
 
 function coll(n) {
     var collName = n
+    this.getCollName = function() {
+        return collName;
+    }
     function collScope(str) {
         return $('#' + collName + " " + str)
     }
@@ -164,7 +167,17 @@ function coll(n) {
         reposition()
     }
     this.reload = setupTable
+    this.getHR = function() {
+        return collCell(this,collScope("td").eq(9))
+    }
     return this;
+}
+
+
+function magCell() {
+    var cell = coll('available').getHR()
+    console.debug(cell.text())
+    cell.withType(function(d) {})
 }
 
 
@@ -192,42 +205,135 @@ function getIndex(obj,array) {
     alert('didnt find')
 }
 
+function array_join(arr,str) {
+    var res = ""
+    for(var i=0;i<arr.length;i++) {
+        res += arr[i]
+        if (i < arr.length-1) {
+            res += str 
+        }
+    }
+    return res
+    
+}
 
-function setupCellEdit() {
-    function editCell(cell) {
-        var val = cell.attr('data-raw-value')
-        val = cell.text()
-        cell.html("<input type='text' value='" + val + "'/>" + "<a href='#' class='expand' >e</a>")
-        cell.find('input').focus()
-        cell.find('a.expand').click(function() {
-            alert('foo')
-        })
-        var row = cell.parent()
-        var table = row.parent().parent()
-        var row_id = row.find('td:first').text()
-        var column_index = getIndex(cell[0],row.find('td'))
-        var field_name = table.find('tr:first th').eq(column_index).text()
-        $.get('/cell_edit',{row_id: row_id, coll: table.attr('data-coll')},function(data) {
-            $('#content').attr('src',data)
-           // ..alert(data)
-        })
-        //alert(row.find('td').length)
-        cell.find('input').blur(function() {
-            var ops = {coll: table.attr('data-coll'), row_id: row_id, field_name: field_name, field_value: $(this).val()}
-            $.get("/update_row",ops,function(data) {
-                console.debug(data)
-                cell.text(data)
-                //reloadAll()
-            })
-            
+function collCell(t) {
+    var td = t
+    var val = td.text()
+    var row = td.parent()
+    var table = row.parent().parent()
+    var coll_name = table.attr('data-coll')
+    var c = coll(coll_name)
+    var row_id = row.find('td:first').text()
+    var column_index = getIndex(td[0],row.find('td'))
+    var field_name = table.find('tr:first th').eq(column_index).text()
+    var saved_field_info = null
+    function std_entry_field() { return "<input type='text' value='" + val + "'/>" }
+    
+    function arrayFieldVals() {
+        var t = $.map( td.find("input"), function(x) { return '"' + $(x).val() + '"' } )
+        var inner = array_join(t,",")
+        var res = "[" + inner + "]"
+        console.debug("afv: " + res)
+        return res
+    }
+    
+    function hashFieldVals() {
+        function hashField(t) {
+            var k = $(t).find('input').eq(0).val()
+            var v = $(t).find('input').eq(1).val()
+            return '"' + k + '" => "' + v + '"' 
+        }
+        
+        var t = $.map( td.find("tr"), function(x) { return hashField(x) } )
+        var inner = array_join(t,",")
+        var res = "{" + inner + "}"
+        console.debug("afv: " + res)
+        return res
+    }
+    
+    function addArrayField() {
+        td.find('table').append(Jaml.render('array-entry-row',{val: ''}))
+    }
+    function addHashField() {
+        td.find('table').append(Jaml.render('hash-entry-row',{val: '', key: ''}))
+    }
+    
+    this.text = function() {
+        return td.text();
+    }
+    
+    function withTypeInner(f) {
+        console.debug('getting remote field info')
+        $.getJSON("/field_info",{coll: coll_name, row_id: row_id, field: field_name},function(data) {
+            saved_field_info = data
+            console.debug(data)
+            f(data)
         })
     }
     
+    function withType(f) {
+        if (saved_field_info == null) {
+            withTypeInner(f)
+        }
+        else {
+            f(saved_field_info)
+        }
+    }
     
+    function editCellInner(field_info) {
+        function updateRowOps(val) {
+            return {coll: coll_name, row_id: row_id, field_name: field_name, field_value: val}
+        }
+        if (field_info.field_type == 'Array') {
+            td.html(array_entry(field_info.value))
+            td.find('a.save').click(function() {
+                $.get("/update_row", updateRowOps(arrayFieldVals()), function(data) {
+                    td.text(data)
+                    td.attr('data-editing','0')
+                })
+            })
+            td.find('a.add').click(addArrayField)
+        }
+        else if (field_info.field_type == 'Hash') {
+            td.html(hash_entry(field_info.value))
+            td.find('a.save').click(function() {
+                $.get("/update_row", updateRowOps(hashFieldVals()), function(data) {
+                    td.html(data)
+                    td.attr('data-editing','0')
+                })
+            })
+            td.find('a.add').click(addHashField)
+        }
+        else
+        {
+            td.html(std_entry_field())
+            td.find('input').blur(function() {
+                $.get("/update_row", updateRowOps($(this).val()), function(data) {
+                    td.text(data)
+                    td.attr('data-editing','0')
+                }) 
+            })
+        }
+        td.find('input').eq(0).focus()
+        
+        
+    }
+    
+    this.editCell = function() {
+        withType(editCellInner)
+    }
+    return this;
+}
+function setupCellEdit() {
     $('.collection td').live('click',function() {
-        editCell($(this))
+        collCell($(this)).editCell()
     })
 }
+
+// $.get('/cell_edit',{row_id: row_id, coll: table.attr('data-coll')},function(data) {
+//     $('#content').attr('src',data)
+// })
 
 
 function reloadAll() {

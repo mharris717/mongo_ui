@@ -20,6 +20,21 @@ class UserCollection
   end
 end
 
+class Array
+  def to_f
+    1
+  end
+end
+
+class Object
+  def to_i
+    17
+  end
+  def to_f
+    1
+  end
+end
+
 class TeamPosCollection
   def pos(player)
     res = player['position'].split(",").first
@@ -36,7 +51,7 @@ class TeamPosCollection
     end
     %w(avg era whip).each do |col|
       dcol = (col == 'avg') ? 'pa' : 'ip'
-      top = ps.map { |p| p[col] * p[dcol] }.sum
+      top = ps.map { |p| p[col].to_f * p[dcol].to_f }.sum
       bottom = res[dcol]
       bottom = 1 if bottom == 0
       res[col] = (top.to_f / bottom.to_f).to_s[0...5].to_f
