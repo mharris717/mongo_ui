@@ -107,10 +107,10 @@ function collCell(t,r,top_cb) {
         td.find('a.save').click(function() {
             myGet("/update_row", updateRowOps(me.fieldVals()), td)
         })
-        td.find('a.add').click(function() {
-            smeDebug('adding field')
-            me.addField()
-        })
+        // td.find('a.add').click(function() {
+        //     smeDebug('adding field')
+        //     me.addField()
+        // })
     }
     
     this.setupFieldPlain = function() {
@@ -132,11 +132,13 @@ function collCell(t,r,top_cb) {
         var k = td.find('table').eq(0).attr('data-type')
         return isPresent(k) ? k : null
     }
+    function inheritanceHash() {
+        return {'Array': arrayCell, 'Hash': hashCell}
+    }
     this.guessInheritanceFunc = function() {
         var k = me.guessInheritanceClass()
         if (isBlank(k)) return null
-        var h = {'Array': arrayCell, 'Hash': hashCell}
-        return h[k]
+        return inheritanceHash()[k]
     }
     this.setupInheritanceIfPossible = function() {
         var f = me.guessInheritanceFunc()
@@ -146,9 +148,12 @@ function collCell(t,r,top_cb) {
     }
     var setupInheritance = function(field_info) {
         smeDebug("setupInheritance cls: "+field_info.field_type+' val: ' + field_info.value)
-        var h = {'Array': arrayCell, 'Hash': hashCell}
-        me.subclassFunc = get_matching_func(h,field_info.field_type,plainCellSetup)
+        me.subclassFunc = get_matching_func(inheritanceHash(),field_info.field_type,plainCellSetup)
         me.subclassFunc()
+    }
+    
+    this.fieldVals = function() {
+        return '"' + td.find('input').val() + '"'
     }
     
     this.fiSetup = function(f) {

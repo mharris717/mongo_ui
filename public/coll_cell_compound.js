@@ -14,17 +14,11 @@ function arrayCell() {
             var c = new collCell($(child),td)
             var cls = c.guessInheritanceClass()
             c.setupInheritanceIfPossible()
-            if (isBlank(cls)) {
-                return '"' + child.find('input').val() + '"'
-            }
-            else {
-                return c.fieldVals()
-            }
+            return c.fieldVals()
         }
         var t = $.map( immediateChildren(), function(x) { return abc($(x)) } )
         var inner = array_join(t,",")
         var res = "[" + inner + "]"
-        console.debug("afv: " + res)
         return res
     }
     
@@ -33,8 +27,6 @@ function arrayCell() {
     }
     
     this.getInputHtmlInner = function(field_info,is_child,td_id) {
-        smeDebug('array getInputHtmlInner val: ')
-        smeDebug(field_info)
         return array_entry(field_info, is_child, td_id)
     }
     
@@ -42,21 +34,38 @@ function arrayCell() {
 }
 
 function hashCell(t,r) {
-    function hashFieldVals() {
-        function hashField(t) {
-            var k = $(t).find('input').eq(0).val()
-            var v = $(t).find('input').eq(1).val()
-            return '"' + k + '" => "' + v + '"' 
-        }
-        
-        var t = $.map( td.find("tr"), function(x) { return hashField(x) } )
-        var inner = array_join(t,",")
-        var res = "{" + inner + "}"
-        console.debug("afv: " + res)
+    var td = this.getTd()
+    this.setupField = function() {
+        this.setupCompoundField()
+    }
+    
+    function immediateChildRows() {
+        var res = $('td.value.'+td.attr('id')).parent()
+        //smeDebug("hash child rows",{res: res.length})
         return res
     }
     
-    function addHashField() {
-        td.find('table').append(Jaml.render('hash-entry-row',{val: '', key: ''}))
+    this.fieldVals = function() {
+        function hashField(t) {
+            var k = $(t).find('input').eq(0).val()
+            var c = $(t).find('td.value').eq(0)
+            var value_cell = new collCell($(c),td)
+            value_cell.setupInheritanceIfPossible()
+            var v = value_cell.fieldVals()
+            return '"' + k + '" => ' + v 
+        }
+        
+        var t = $.map( immediateChildRows(), function(x) { return hashField(x) } )
+        var inner = array_join(t,",")
+        var res = "{" + inner + "}"
+        return res
+    }
+    
+    this.addField = function() {
+        td.find('table').eq(0).append(Jaml.render('hash-entry-row',{val: '', key: '', parent_id: td.attr('id')}))
+    }
+    
+    this.getInputHtmlInner = function(field_info,is_child,td_id) {
+        return hash_entry(field_info, is_child, td_id)
     }
 }

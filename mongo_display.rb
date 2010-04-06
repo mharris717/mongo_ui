@@ -6,7 +6,7 @@ def mongo_value(v)
       #v[1...-1].split(",").map { |x| x.tmo }
       eval(v).map { |x| mongo_value(x.tmo) }
     elsif v[0..0] == '{'
-      eval(v).map_key { |x| x.tmo }.map_value { |x| x.tmo }
+      eval(v).map_key { |x| x.tmo }.map_value { |x| mongo_value(x.tmo) }
     else
       v.tmo
     end
