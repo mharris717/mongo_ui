@@ -9,6 +9,8 @@ function hash_keys(h)
 }
 
 Jaml.register("array-entry-row",function(el) {
+    // console.debug('array-entry-row')
+    // console.debug(el)
     tr(
         td(el.ind),
         td({'class': 'value' + ' ' + el['parent_id'], 'data-key': ''+el.ind}, 
