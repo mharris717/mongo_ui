@@ -4,13 +4,20 @@ function smeDebug(str,attrs) {
             str += " "+k+": "+v
         })
     }
+    var d = new Date();
+    str = prettyTime()+' | '+str
     console.debug(str)
+}
+
+function prettyTime(d) {
+    if (isBlank(d)) d = new Date()
+    return ''+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds()
 }
 
 function tag(t,cont,attrs,close) {
     if (isBlank(close)) close = true
     var str = "<" + t + " "
-    if (!isPresent(attrs)) {
+    if (isPresent(attrs)) {
         hash_each(attrs,function(k,v) {
             str += ""+k+"='"+v+"' "
         })
@@ -26,7 +33,8 @@ function inputField(attrs) {
 
 function textInputField(attrs) {
     if (isBlank(attrs['type'])) attrs['type'] = 'text'
-    return inputField(attrs)
+    var res = inputField(attrs)
+    return res
 }
 
 function getIndex(obj,array) {
@@ -58,17 +66,18 @@ function isBlank(el) {
 }
 
 function isPresent(el) {
-    return isBlank(el)
+    return !isBlank(el)
 }
 
-function get_matching_func(h,key) {
+function get_matching_func(h,key,default_func) {
+    if (isBlank(default_func)) default_func = function() {}
     var f = h[key]
-    if (isBlank(f)) f = function() {}
+    if (isBlank(f)) f = default_func
     return f
 }
 
 function randID() {
-    return parseInt(Math.random() * 1000000000)
+    return ''+parseInt(Math.random() * 1000000000)
 }
 
 function runRepeat(f) {
@@ -88,8 +97,8 @@ function hash_keys(h)
 
 function hash_each(h,f) {
     var ks = hash_keys(h)
-    $.each(ks,function(k) {
-        f(k,h[k])
+    $.each(ks,function() {
+        f(this,h[this])
     })
 }
 
@@ -107,4 +116,34 @@ function hash_merge(h,n) {
         })
     }
     return h
+}
+
+function myGet(url,ops,farg) {
+    f = null
+    if (isBlank(farg)) f = function() {}
+    else if (isPresent(farg.html)) {
+        f = function(data) {
+            farg.html(data)
+        }
+    }
+    else {
+        f = farg
+    }
+    return $.get(url,ops,f)
+}
+
+function loggingFunc(name,f) {
+    return function(a,b,c,d,e) {
+        var i = randID()
+        smeDebug("Function Called: " + name + ' ' + i)
+        var res = null
+        if (arguments.length == 0) res = f()
+        else if (arguments.length == 1) res = f(a)
+        else if (arguments.length == 2) res = f(a,b)
+        else if (arguments.length == 3) res = f(a,b,c)
+        else if (arguments.length == 4) res = f(a,b,c,d)
+        else fdggdfgf()
+        smeDebug("Function Ending: " + name + ' ' + i)
+        return res
+    }
 }

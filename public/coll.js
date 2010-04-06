@@ -14,7 +14,7 @@ function coll(n) {
     function hitServer(url,ops,f) {
         ops['coll'] = collName
         if (isBlank(f)) f = function() {}
-        $.get(url,ops,f)
+        myGet(url,ops,f)
     }
     
     function newRow() {
@@ -39,9 +39,7 @@ function coll(n) {
     }
 
     function reloadTable() {
-        hitServer('/table',{},function(data) {
-            collScope('').html(data)
-        })
+        hitServer('/table',{},collScope(''))
     }
     
     function setupRename() {
@@ -61,26 +59,34 @@ function coll(n) {
         return collScope('').attr('data-search-str')
     }
     
+    function onDraw() {
+        hideID()
+        setupCellEdit()
+    }
+    
     function baseSetupOps(addl) {
         var h = {
     		"bProcessing": true,
     		"bServerSide": true,
-            fnDrawCallback: hideID,
+            fnDrawCallback: onDraw,
     		"sAjaxSource": "/table2?coll="+collName
     	}
     	return hash_merge(h,addl)
     }
     
     function resetTable(ops) {
-        collScope('table').dataTable(baseSetupOps(ops))
+        var ops = baseSetupOps(ops)
+        smeDebug("resetTable ops: " + ops)
+        collScope('table').dataTable(ops)
     }
     
-    function setupTable() {
-        var ops = hash_add_if_present({},'oSearch',searchStrAttr())
+    var setupTable = loggingFunc('setupTable',function() {
+        var ops = {}
+        //var ops = hash_add_if_present({},'oSearch',searchStrAttr())
     	ops['aaSorting'] = eval(collScope('').attr('data-sort'))
-        smeDebug('setupTable data-sort',{datasort: collScope('').attr('data-sort'), evaled: eval(collScope('').attr('data-sort'))})
+        smeDebug('setupTable data-sort',{oSearch: ops['oSearch'], datasort: collScope('').attr('data-sort'), evaled: eval(collScope('').attr('data-sort'))})
         resetTable(ops)
-    }
+    })
     
     function copy() {
         hitServer("/copy",{},function() {
@@ -98,7 +104,7 @@ function coll(n) {
     }
     
     function setupActions() {
-        var h = {'copy': copy, 'search': search, 'pagesize': pagesize, 'reload': setupTable}
+        var h = {'copy': copy, 'search': search, 'pagesize': pagesize, 'reload': setupTable, 'newrow': newRow}
         collScope('.actions select').change(function() {
             var val = $(this).find('option:selected').val()
             h[val]()
@@ -122,6 +128,11 @@ function coll(n) {
         collScope('').draggable({stop: savePosition})
     }
     
+    function setupCellEdit() {
+        collScope('td').click(function() {
+            collCell($(this)).editCell()
+        })
+    }
     function reposition() {
         if (collScope('').attr('data-top')) {
             collScope('').css('position','absolute').css('top',collScope('').attr('data-top')).css('left',collScope('').attr('data-left'))
@@ -132,12 +143,7 @@ function coll(n) {
         }
     }
     this.setupCollection = function() {
-        collScope('a.new-row').live('click',newRow)
-        setupTable()
-        setupRename()
-        setupActions()
-        setupDraggable()
-        reposition()
+        $.each([setupTable,setupRename,setupActions,setupDraggable,reposition,setupCellEdit],function() { this() } )
     }
     this.reload = setupTable
     return this;

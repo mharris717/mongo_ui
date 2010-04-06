@@ -30,7 +30,7 @@ helpers do
     File.create("log/last_params.txt",strs.join("\n"))
   end
   def table_options_dropdown
-    inner = ['','copy','search','pagesize','reload'].sort.map { |action| "<option value='#{action}'>#{action.humanize}</option>" }.join
+    inner = ['','copy','search','pagesize','reload','newrow'].sort.map { |action| "<option value='#{action}'>#{action.humanize}</option>" }.join
     "<select>#{inner}</select>"
   end
   def coll_style(c)
