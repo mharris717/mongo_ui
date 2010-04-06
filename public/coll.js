@@ -76,17 +76,16 @@ function coll(n) {
     
     function resetTable(ops) {
         var ops = baseSetupOps(ops)
-        smeDebug("resetTable ops: " + ops)
         collScope('table').dataTable(ops)
     }
     
-    var setupTable = loggingFunc('setupTable',function() {
+    var setupTable = function() {
         var ops = {}
         //var ops = hash_add_if_present({},'oSearch',searchStrAttr())
     	ops['aaSorting'] = eval(collScope('').attr('data-sort'))
-        smeDebug('setupTable data-sort',{oSearch: ops['oSearch'], datasort: collScope('').attr('data-sort'), evaled: eval(collScope('').attr('data-sort'))})
+        //smeDebug('setupTable data-sort',{oSearch: ops['oSearch'], datasort: collScope('').attr('data-sort'), evaled: eval(collScope('').attr('data-sort'))})
         resetTable(ops)
-    })
+    }
     
     function copy() {
         hitServer("/copy",{},function() {

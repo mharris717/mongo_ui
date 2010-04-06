@@ -1,4 +1,5 @@
 function collCell(t,r) {
+    var me = this
     var initial_root_td = r
     var root_td = r
     var td = $(t)
@@ -30,7 +31,7 @@ function collCell(t,r) {
     this.getTd = function() { return td }
     this.getNaiveFieldName = function() { return field_name }
     this.text = function() { return td.text(); }
-    function std_entry_field(val) { var res = textInputField({value: val}); smeDebug('std val: '+res); return res}
+    function std_entry_field(val) { return textInputField({value: val}); }
     function baseOps(ops) { 
         return hash_merge({coll: coll_name, row_id: row_id,field: this.getFieldName()},ops)
     }
@@ -56,21 +57,22 @@ function collCell(t,r) {
         return baseOps(ops)
     }
     
-    var withTypeInner = loggingFunc('withTypeInner',function(f) {
+    var withTypeInner = function(f) {
         $.getJSON("/field_info",fieldInfoOps(),function(data) {
             saved_field_info = data
+            smeDebug('field_info',data)
             f(data)
         })
-    })
+    }
     
-    var withType = loggingFunc('withType',function(f) {
+    var withType = function(f) {
         if (saved_field_info == null) {
             withTypeInner(f)
         }
         else {
             f(saved_field_info)
         }
-    })
+    }
     
     //override this in subclasses
     this.getInputHtmlInner = function(field_info,c,t) {
@@ -99,10 +101,14 @@ function collCell(t,r) {
     }
 
     this.setupCompoundField = function() {
+        var sthis = this
         td.find('a.save').click(function() {
-            myGet("/update_row", updateRowOps(this.fieldVals()), td)
+            myGet("/update_row", updateRowOps(sthis.fieldVals()), td)
         })
-        td.find('a.add').click(this.addField)
+        td.find('a.add').click(function() {
+            smeDebug('adding field')
+            me.addField
+        })
     }
     
     this.setupFieldPlain = function() {
@@ -116,11 +122,11 @@ function collCell(t,r) {
     }
     
     function plainCellSetup() { this.setupField = this.setupFieldPlain }
-    var setupInheritance = loggingFunc('setupInheritance',function(field_info) {
+    var setupInheritance = function(field_info) {
         var h = {'Array': arrayCell, 'Hash': hashCell}
         this.subclassFunc = get_matching_func(h,field_info.field_type,plainCellSetup)
         this.subclassFunc()
-    })
+    }
     
     var editCellInner = loggingFunc('editCellInner',function() {
         withType(function(field_info) {
@@ -132,11 +138,11 @@ function collCell(t,r) {
         })     
     })
 
-    this.editCell = loggingFunc('editCell',function() {
+    this.editCell = function() {
         if (edited) return;
         editCellInner()
         edited = true
-    })
+    }
     
     return this;
 }
