@@ -26,7 +26,7 @@ function array_entry(arr,child,parent_id) {
     for(var i=0;i<arr.length;i++) {
         narr.push({val: arr[i], ind: ''+i, parent_id: parent_id})
     }
-    var res = "<table>" + Jaml.render('array-entry-row',narr) + "</table>"
+    var res = "<table data-type='Array'>" + Jaml.render('array-entry-row',narr) + "</table>"
     if (!child) res += "<a class='save' href='#'>Save</a>"
     res += "<a class='add' href='#'>Add</a>"
     return res
@@ -40,6 +40,6 @@ function hash_entry(arr,child,parent_id) {
         var v = arr[k]
         narr.push({val: v, key: k, parent_id: parent_id})
     }
-    return "<table>" + Jaml.render('hash-entry-row',narr) + "</table>" + "<a class='save' href='#'>Save</a>" + "<a class='add' href='#'>Add</a>"
+    return "<table data-type='Hash'>" + Jaml.render('hash-entry-row',narr) + "</table>" + "<a class='save' href='#'>Save</a>" + "<a class='add' href='#'>Add</a>"
 }
 

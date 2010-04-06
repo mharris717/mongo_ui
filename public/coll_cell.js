@@ -1,4 +1,4 @@
-function collCell(t,r) {
+function collCell(t,r,top_cb) {
     var me = this
     var initial_root_td = r
     var root_td = r
@@ -33,10 +33,10 @@ function collCell(t,r) {
     this.text = function() { return td.text(); }
     function std_entry_field(val) { return textInputField({value: val}); }
     function baseOps(ops) { 
-        return hash_merge({coll: coll_name, row_id: row_id,field: this.getFieldName()},ops)
+        return hash_merge({coll: coll_name, row_id: row_id,field: me.getFieldName()},ops)
     }
     this.getFieldName = function() {
-        return isChild() ? collCell(root_td).getFieldName() : this.getNaiveFieldName();
+        return isChild() ? collCell(root_td).getFieldName() : me.getNaiveFieldName();
     }
     
     function getVal() {
@@ -84,30 +84,32 @@ function collCell(t,r) {
     //override this.addField in subclass
     
     var getInputHtml = function(field_info) {
-        return this.getInputHtmlInner(field_info.value,isChild(),td.attr('id'))
+        var res = me.getInputHtmlInner(field_info.value,isChild(),td.attr('id'))
+        smeDebug("getInputHtml",{res: res, val: field_info.value})
+        return res
     }
     
     this.setInputHtml = function() {
         withType(function(fi) {
             td.html(getInputHtml(fi))
         })
-        td.find('a.add').click(this.addField)
+        td.find('a.add').click(me.addField)
     }
     
     function eachInnerTd(f) {
         td.find("td.value").each(function() {
-            f(collCell(this,root_td))
+            var c = new collCell(this,root_td)
+            c.fiSetup(f)
         })
     }
 
     this.setupCompoundField = function() {
-        var sthis = this
         td.find('a.save').click(function() {
-            myGet("/update_row", updateRowOps(sthis.fieldVals()), td)
+            myGet("/update_row", updateRowOps(me.fieldVals()), td)
         })
         td.find('a.add').click(function() {
             smeDebug('adding field')
-            me.addField
+            me.addField()
         })
     }
     
@@ -122,18 +124,46 @@ function collCell(t,r) {
     }
     
     function plainCellSetup() { this.setupField = this.setupFieldPlain }
-    var setupInheritance = function(field_info) {
+    
+    this.guessInheritanceClass = function() {
+        if (td.find('table').length == 0) {
+            return null
+        }
+        var k = td.find('table').eq(0).attr('data-type')
+        return isPresent(k) ? k : null
+    }
+    this.guessInheritanceFunc = function() {
+        var k = me.guessInheritanceClass()
+        if (isBlank(k)) return null
         var h = {'Array': arrayCell, 'Hash': hashCell}
-        this.subclassFunc = get_matching_func(h,field_info.field_type,plainCellSetup)
-        this.subclassFunc()
+        return h[k]
+    }
+    this.setupInheritanceIfPossible = function() {
+        var f = me.guessInheritanceFunc()
+        if (isBlank(f)) return
+        this.sb = f
+        this.sb()
+    }
+    var setupInheritance = function(field_info) {
+        smeDebug("setupInheritance cls: "+field_info.field_type+' val: ' + field_info.value)
+        var h = {'Array': arrayCell, 'Hash': hashCell}
+        me.subclassFunc = get_matching_func(h,field_info.field_type,plainCellSetup)
+        me.subclassFunc()
+    }
+    
+    this.fiSetup = function(f) {
+        withType(function(fi) {
+            setupInheritance(fi)
+            f(me)
+        })
     }
     
     var editCellInner = loggingFunc('editCellInner',function() {
         withType(function(field_info) {
             setupInheritance(field_info)
-            this.setInputHtml()
+            me.setInputHtml()
             eachInnerTd(function(x) { x.setInputHtml() })
-            this.setupField()
+            me.setupField()
             td.find('input').eq(0).focus()
         })     
     })
@@ -144,11 +174,19 @@ function collCell(t,r) {
         edited = true
     }
     
+    if (isPresent(top_cb)) {
+        withType(function(fi) {
+            setupInheritance(fi)
+            top_cb(me)
+        })
+    }
+    
     return this;
 }
 edited = false
 function setupCellEdit() {
     $('.collection td').click(function() {
-        collCell($(this)).editCell()
+        var c = new collCell($(this))
+        c.editCell()
     })
 }

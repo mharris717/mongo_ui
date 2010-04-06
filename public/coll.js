@@ -129,7 +129,8 @@ function coll(n) {
     
     function setupCellEdit() {
         collScope('td').click(function() {
-            collCell($(this)).editCell()
+            var c = new collCell($(this))
+            c.editCell()
         })
     }
     function reposition() {
