@@ -1,12 +1,4 @@
-function hash_keys(h)
-{
-  var keys = [];
-  for(i in h) if (h.hasOwnProperty(i))
-  {
-    keys.push(i);
-  }
-  return keys;
-}
+
 
 Jaml.register("array-entry-row",function(el) {
     // console.debug('array-entry-row')

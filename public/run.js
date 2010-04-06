@@ -2,18 +2,11 @@ TableToolsInit.sSwfPath = "/media/swf/ZeroClipboard.swf";
  
 $(function() {
     eachColl(function(c) {
-        c.setupNewRow()
+        c.setupCollection()
     })
 })
 
 $(setupCellEdit)
-
-function hideID() {
-    $('tr').each(function() {
-        $(this).find('td').eq(0).hide()
-        $(this).find('th').eq(0).hide()
-    })
-}
 
 
 // $(function() {
