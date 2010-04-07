@@ -1,11 +1,13 @@
-
+Jaml.register('array-entry-row-cells',function(el) {
+    td(el.ind),
+    td({'class': 'value ' + el['parent_id'], 'data-key': ''+el.ind}, 
+        input({type: 'text', value: el.val}) 
+    )
+})
 
 Jaml.register("array-entry-row",function(el) {
     tr(
-        td(el.ind),
-        td({'class': 'value ' + el['parent_id'], 'data-key': ''+el.ind}, 
-            input({type: 'text', value: el.val}) 
-        )
+        Jaml.render('array-entry-row-cells',el)
     )
 })
 
@@ -19,14 +21,14 @@ Jaml.register("hash-entry-row",function(el) {
 })
 
 function array_entry(arr,child,parent_id) {
-    console.debug("array_entry arr: " + arr)
+    console.debug("array_entry",{arr: arr, child: child, parent: parent_id, sz: arr.length})
     var narr = []
     for(var i=0;i<arr.length;i++) {
         narr.push({val: arr[i], ind: ''+i, parent_id: parent_id})
     }
     var res = "<table data-type='Array'>" + Jaml.render('array-entry-row',narr) + "</table>"
     if (!child) res += "<a class='save' href='#'>Save</a>"
-    res += "<a class='add' href='#'>Add</a>"
+    res += "<a class='add' href='#'>Add</a><a class='change' href='#'>Change</a>"
     return res
 }
 
@@ -40,7 +42,18 @@ function hash_entry(arr,child,parent_id) {
     }
     var res = "<table data-type='Hash'>" + Jaml.render('hash-entry-row',narr) + "</table>"
     if (!child) res += "<a class='save' href='#'>Save</a>"
-    res += "<a class='add' href='#'>Add</a>"
+    res += "<a class='add' href='#'>Add</a><a class='change' href='#'>Change</a>"
     return res
 }
+// 
+// Jaml.register('field-type-selector',function() {
+//     select({class: 'field-type-selector'},
+//         option({value: 'Array'}, 'Array'),
+//         option({value: 'Hash'}, 'Hash')
+//     )
+// })
 
+
+function field_type_selector() {
+    return "<select class='field-type-selector'><option value=''></option><option value='arrayCell'>Array</option><option value='hashCell'>Hash</option><option value='plain'>Plain</option></select>"
+}

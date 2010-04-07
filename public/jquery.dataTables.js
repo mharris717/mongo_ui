@@ -5073,6 +5073,9 @@
 			var nThs = nThead.length===0 ? null : _fnGetUniqueThs( nThead[0] );
 			var bUseCols = typeof oInit.aoColumns != 'undefined';
 			
+			if (nThs == null) {
+			    var fgdsfgf = 42
+			}
 			for ( i=0, iLen=bUseCols ? oInit.aoColumns.length : nThs.length ; i<iLen ; i++ )
 			{
 				var oCol = bUseCols ? oInit.aoColumns[i] : null;

@@ -43,7 +43,7 @@ function getIndex(obj,array) {
             return i;
         }
     }
-    alert('didnt find')
+    alert('didnt find, array size was '+array.length)
 }
 
 function array_join(arr,str) {
@@ -146,4 +146,15 @@ function loggingFunc(name,f) {
         smeDebug("Function Ending: " + name + ' ' + i)
         return res
     }
+}
+
+function directChildren(selector,parent) {
+    var arr = parent.find(selector)
+    var res = []
+    arr.each(function() {
+        if ($(this).parent()[0] == parent[0]) {
+            res.push(this)
+        }
+    })
+    return res
 }

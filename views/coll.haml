@@ -2,7 +2,7 @@
   %span.title= coll.name
   %span.actions= table_options_dropdown
 %form{:action => '/new_row'}
-  %table{'data-coll' => coll.name, 'data-object-id' => coll.object_id, 'data-search-str' => coll.search_str, 'data-sort' => coll.sort_str}
+  %table.colltable{'data-coll' => coll.name, 'data-object-id' => coll.object_id, 'data-search-str' => coll.search_str, 'data-sort' => coll.sort_str}
     %thead
       %tr
         - coll.keys.each do |k|

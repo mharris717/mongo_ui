@@ -76,7 +76,7 @@ function coll(n) {
     
     function resetTable(ops) {
         var ops = baseSetupOps(ops)
-        collScope('table').dataTable(ops)
+        collScope('table:first').dataTable(ops)
     }
     
     var setupTable = function() {
@@ -111,7 +111,7 @@ function coll(n) {
     }
     
     function hideID() {
-        collScope('tr').each(function() {
+        collScope('table.colltable > tbody > tr').each(function() {
             $(this).find('td, th').eq(0).hide()
         })
     }
@@ -128,9 +128,11 @@ function coll(n) {
     }
     
     function setupCellEdit() {
-        collScope('td').click(function() {
-            var c = new collCell($(this))
-            c.editCell()
+        collScope('table.colltable > tbody > tr > td').click(function() {
+            if ($(this).find('input').eq(0).val() != '99') {
+                var c = new collCell($(this))
+                c.editCell()
+            }
         })
     }
     function reposition() {

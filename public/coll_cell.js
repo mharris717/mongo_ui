@@ -10,8 +10,9 @@ function collCell(t,r,top_cb) {
     var coll_name = table.attr('data-coll')
     var c = coll(coll_name)
     var row_id = row.find('td:first').text()
-    var column_index = getIndex(root_td[0],row.find('td'))
+    var column_index = getIndex(root_td[0],directChildren("td",row))
     var field_name = table.find('tr:first th').eq(column_index).text()
+    smeDebug('nested table',{colindex: column_index, fieldname: field_name})
     var saved_field_info = null
     
     function ensureCellHasID() {
@@ -32,8 +33,15 @@ function collCell(t,r,top_cb) {
     this.getNaiveFieldName = function() { return field_name }
     this.text = function() { return td.text(); }
     function std_entry_field(val) { return textInputField({value: val}); }
+    function getRowID() {
+        var i = ''+row_id
+        if (i.length != 24) {
+            alert("bad row id "+i)
+        }
+        return row_id
+    }
     function baseOps(ops) { 
-        return hash_merge({coll: coll_name, row_id: row_id,field: me.getFieldName()},ops)
+        return hash_merge({coll: coll_name, row_id: getRowID(),field: me.getFieldName()},ops)
     }
     this.getFieldName = function() {
         return isChild() ? collCell(root_td).getFieldName() : me.getNaiveFieldName();
@@ -59,6 +67,8 @@ function collCell(t,r,top_cb) {
     
     var withTypeInner = function(f) {
         $.getJSON("/field_info",fieldInfoOps(),function(data) {
+            if (dclick) data['field_type'] = 'Array'
+            if (isPresent(me.guessInheritanceClass())) data['field_type'] = guessInheritanceClass() 
             saved_field_info = data
             smeDebug('field_info',data)
             f(data)
@@ -67,6 +77,7 @@ function collCell(t,r,top_cb) {
     
     var withType = function(f) {
         if (saved_field_info == null) {
+            if (isPresent(me.guessInheritanceClass())) saved_field_info['field_type'] = guessInheritanceClass() 
             withTypeInner(f)
         }
         else {
@@ -85,15 +96,27 @@ function collCell(t,r,top_cb) {
     
     var getInputHtml = function(field_info) {
         var res = me.getInputHtmlInner(field_info.value,isChild(),td.attr('id'))
-        smeDebug("getInputHtml",{res: res, val: field_info.value})
+        //smeDebug("getInputHtml",{res: res, val: field_info.value})
         return res
     }
     
     this.setInputHtml = function() {
+        smeDebug('setInputHtml')
         withType(function(fi) {
-            td.html(getInputHtml(fi))
+            var res = getInputHtml(fi)
+            //smeDebug('setInputHtml',{res: res})
+            td.html(res)
+            td.find('a.add').click(me.addField)
+            td.find('a.save').click(function() {
+                myGet("/update_row", updateRowOps(me.fieldVals()), td)
+            })
+            td.find('a.change').click(function() {
+                // var val = td.find('select option:selected').val()
+                //                 me.changeType(val)
+                td.html(field_type_selector())
+            })
         })
-        td.find('a.add').click(me.addField)
+        
     }
     
     function eachInnerTd(f) {
@@ -104,9 +127,9 @@ function collCell(t,r,top_cb) {
     }
 
     this.setupCompoundField = function() {
-        td.find('a.save').click(function() {
-            myGet("/update_row", updateRowOps(me.fieldVals()), td)
-        })
+        // td.find('a.save').click(function() {
+        //     myGet("/update_row", updateRowOps(me.fieldVals()), td)
+        // })
         // td.find('a.add').click(function() {
         //     smeDebug('adding field')
         //     me.addField()
@@ -126,6 +149,7 @@ function collCell(t,r,top_cb) {
     function plainCellSetup() { this.setupField = this.setupFieldPlain }
     
     this.guessInheritanceClass = function() {
+        if (dclick) return 'Array'
         if (td.find('table').length == 0) {
             return null
         }
@@ -184,6 +208,25 @@ function collCell(t,r,top_cb) {
             setupInheritance(fi)
             top_cb(me)
         })
+    }
+    
+    this.findRoot = function() {
+        var res = $(td)
+        while (true) {
+            if (res.parent().length == 0) return null
+            
+            res = res.parent()
+            if (res.parent().hasClass('odd') || res.parent().hasClass('even')) return res
+        }
+    }
+    
+    this.changeType = function(new_type) {
+        if (new_type != 'plain') {
+            var f = eval(new_type)
+            me.sb = f
+            me.sb()
+        }
+        me.setInputHtml()
     }
     
     return this;
