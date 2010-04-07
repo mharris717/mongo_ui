@@ -66,9 +66,10 @@ def fix_dups
   end
 end
     
+db.collection('bets').remove
 if db.collection('bets').find.count == 0
   c = db.collection('bets')
-  c.save(:home => 'NYM', :away => 'FLA', :line => [{:odds => '+115', :amount => 200}])
+  15.times { c.save(:home => 'NYM', :away => 'FLA', :line => [{:odds => '+115', :amount => 200}]) }
 end
 # UserCollection.create!(:coll_name => 'bs', :base_coll_name => 'bets')
 

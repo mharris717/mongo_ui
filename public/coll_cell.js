@@ -118,6 +118,11 @@ function collCell(t,r,top_cb) {
                 td.html(field_type_selector())
             })
             if (isPresent(cb)) cb()
+            if (td.find('table').length == 0) {
+                td.find('input').blur(function() {
+                         myGet("/update_row", updateRowOps($(this).val()), td) 
+                     })
+            }
         })
         
     }
