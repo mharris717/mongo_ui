@@ -111,7 +111,7 @@ function coll(n) {
     }
     
     function hideID() {
-        collScope('table.colltable > tbody > tr').each(function() {
+        collScope('table.colltable > tbody > tr, table.colltable > thead > tr').each(function() {
             $(this).find('td, th').eq(0).hide()
         })
     }

@@ -1,5 +1,6 @@
 function arrayCell() {
     var td = this.getTd()
+    var me = this
     
     function immediateChildren() {
         return $('td.value.'+td.attr('id'))
@@ -10,12 +11,15 @@ function arrayCell() {
     }
     
     this.fieldVals = function() {
-        smeDebug('array fieldVals')
+        smeDebug('array fieldVals',{sz: immediateChildren().length})
         function abc(child) {
             var c = new collCell($(child),td)
             var cls = c.guessInheritanceClass()
+            
             c.setupInheritanceIfPossible()
-            return c.fieldVals()
+            var res = c.fieldVals()
+            smeDebug('guess',{cls: cls, res: res})
+            return res
         }
         var t = $.map( immediateChildren(), function(x) { return abc($(x)) } )
         var inner = array_join(t,",")
@@ -24,8 +28,19 @@ function arrayCell() {
     }
     
     this.addField = function() {
-        smeDebug('array addField')
-        td.find('table').eq(0).append(Jaml.render('array-entry-row',{val: '', parent_id: td.attr('id')}))
+        me.wt(function(fi) {
+            smeDebug('array addField',fi)
+            if (isPresent(fi['array_hash_keys'])) {
+                var new_id = randID()
+                var str = hash_entry(arrayToBlankHash(fi['array_hash_keys']), false, new_id)
+                str = "<tr><td>17</td><td id='"+new_id+"' class='value "+td.attr('id')+"'>"+str + "</td></tr>"
+                td.find('table').eq(0).append(str)
+            }
+            else {
+                td.find('table').eq(0).append(Jaml.render('array-entry-row',{val: '', parent_id: td.attr('id')}))
+            }
+            
+        })
     }
     
     this.getInputHtmlInner = function(field_info,is_child,td_id) {
@@ -38,7 +53,7 @@ function arrayCell() {
     return this;
 }
 
-function hashCell(t,r) {
+function hashCell() {
     var td = this.getTd()
     this.setupField = function() {
         this.setupCompoundField()

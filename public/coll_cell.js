@@ -85,6 +85,8 @@ function collCell(t,r,top_cb) {
         }
     }
     
+    this.wt = withType
+    
     //override this in subclasses
     this.getInputHtmlInner = function(field_info,c,t) {
         return std_entry_field(field_info)
@@ -100,7 +102,7 @@ function collCell(t,r,top_cb) {
         return res
     }
     
-    this.setInputHtml = function() {
+    this.setInputHtml = function(cb) {
         smeDebug('setInputHtml')
         withType(function(fi) {
             var res = getInputHtml(fi)
@@ -115,6 +117,7 @@ function collCell(t,r,top_cb) {
                 //                 me.changeType(val)
                 td.html(field_type_selector())
             })
+            if (isPresent(cb)) cb()
         })
         
     }
@@ -136,11 +139,11 @@ function collCell(t,r,top_cb) {
         // })
     }
     
-    this.setupFieldPlain = function() {
-        td.find('input').blur(function() {
-            myGet("/update_row", updateRowOps($(this).val()), td) 
-        })
-    }
+    this.setupFieldPlain = loggingFunc('setupFieldPlain',function() {
+        // td.find('input').blur(function() {
+        //          myGet("/update_row", updateRowOps($(this).val()), td) 
+        //      })
+    })
     
     function updateRowOps(val) {
         return {coll: coll_name, row_id: row_id, field_name: field_name, field_value: val}
@@ -226,7 +229,16 @@ function collCell(t,r,top_cb) {
             me.sb = f
             me.sb()
         }
-        me.setInputHtml()
+        var cb = null
+        if (new_type == 'plain') {
+            cb = function() {
+                td.find('input').blur(function() {
+                    myGet("/update_row", updateRowOps($(this).val()), td) 
+                })
+            }
+        }
+        me.setInputHtml(cb)
+        smeDebug('setinput')
     }
     
     return this;

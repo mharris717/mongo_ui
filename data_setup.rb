@@ -66,6 +66,11 @@ def fix_dups
   end
 end
     
+if db.collection('bets').find.count == 0
+  c = db.collection('bets')
+  c.save(:home => 'NYM', :away => 'FLA', :line => [{:odds => '+115', :amount => 200}])
+end
+# UserCollection.create!(:coll_name => 'bs', :base_coll_name => 'bets')
 
 #load_players!
 #set_pos_list!

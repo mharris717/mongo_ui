@@ -1,15 +1,22 @@
 def mongo_value(v)
+  puts "mongo_value #{v.inspect}"
   if v.kind_of?(Time)
     v
   elsif v.kind_of?(String)
     if v[0..0] == '['
       #v[1...-1].split(",").map { |x| x.tmo }
-      eval(v).map { |x| mongo_value(x.tmo) }
+      eval(v).map { |x| mongo_value(x.tmo) }.select { |x| x.present? }.tap { |x| puts "mv arr #{x.inspect}"}
     elsif v[0..0] == '{'
-      eval(v).map_key { |x| x.tmo }.map_value { |x| mongo_value(x.tmo) }
+      r = eval(v).map_key { |x| x.tmo }.map_value { |x| mongo_value(x.tmo) }.without_blank_values
+      puts "mongo_value hash res #{r.inspect}"
+      r.empty? ? nil : r
     else
       v.tmo
     end
+  elsif v.kind_of?(Array)
+    v.select { |x| x.present? }
+  elsif v.kind_of?(Hash)
+    v.without_blank_values
   else
     v.tmo
   end
@@ -32,7 +39,7 @@ end
 
 class String
   def num?
-    self =~ /^[\d\.]*$/
+    size > 0 && self =~ /^[\d\.]*$/
   end
   def tmo
     if num? 

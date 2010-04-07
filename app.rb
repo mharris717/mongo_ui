@@ -129,5 +129,6 @@ get '/field_info' do
   end
   cls = f.class.to_s
   cls = 'Hash' if cls == 'OrderedHash'
-  {'field_type' => cls, 'value' => f}.to_json.tap { |x| File.append("log/field_info.log","#{Time.now} #{x}\n") }
+  ahk = (f.kind_of?(Array) && f.contains_all_hashes?) ? f.map { |x| x.keys }.flatten.uniq : nil
+  {'field_type' => cls, 'value' => f, 'array_hash_keys' => ahk}.to_json.tap { |x| File.append("log/field_info.log","#{Time.now} #{x}\n") }
 end

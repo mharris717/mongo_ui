@@ -19,7 +19,9 @@ function tag(t,cont,attrs,close) {
     var str = "<" + t + " "
     if (isPresent(attrs)) {
         hash_each(attrs,function(k,v) {
-            str += ""+k+"='"+v+"' "
+            if (isPresent(v)) {
+                str += ""+k+"='"+v+"' "
+            }
         })
     }
     str += ">"
@@ -155,6 +157,14 @@ function directChildren(selector,parent) {
         if ($(this).parent()[0] == parent[0]) {
             res.push(this)
         }
+    })
+    return res
+}
+
+function arrayToBlankHash(arr) {
+    var res = {}
+    $.each(arr,function() {
+        res[this] = null
     })
     return res
 }

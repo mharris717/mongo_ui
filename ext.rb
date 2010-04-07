@@ -120,6 +120,14 @@ class Hash
   def values_in_key_order(ks)
     ks.map { |x| self[x] }
   end
+  def without_blank_values
+    res = {}
+    each do |k,v|
+      res[k] = v if v.present?
+    end
+    puts "without_blank_values before #{inspect} after #{res.inspect}"
+    res
+  end
 end
 
 class Array

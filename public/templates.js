@@ -12,6 +12,7 @@ Jaml.register("array-entry-row",function(el) {
 })
 
 Jaml.register("hash-entry-row",function(el) {
+    if (isBlank(el.val)) el.val = ''
     tr(
         td( input({type: 'text', value: el.key}) ),
         td( {'class': 'value ' + el['parent_id'], 'data-key': ''+el.key},
