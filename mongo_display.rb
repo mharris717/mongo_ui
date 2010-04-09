@@ -10,6 +10,8 @@ def mongo_value(v)
       r = eval(v).map_key { |x| x.tmo }.map_value { |x| mongo_value(x.tmo) }.without_blank_values
       puts "mongo_value hash res #{r.inspect}"
       r.empty? ? nil : r
+    elsif v.date?
+      v.to_time
     else
       v.tmo
     end
@@ -37,9 +39,25 @@ class Numeric
   end
 end
 
+require 'parsedate'
+class Time
+  def self.parsedate(str)
+    args = ParseDate.parsedate(str)
+    local(*args)
+  end
+end
+
 class String
   def num?
     size > 0 && self =~ /^[\d\.]*$/
+  end
+  def date?
+    !!((self =~ /\/.*\//) && Time.parsedate(self))
+  rescue
+    return false
+  end
+  def to_time
+    Time.parsedate(self)
   end
   def tmo
     if num? 
@@ -116,5 +134,26 @@ class Hash
 end
 class OrderedHash
   include HashMod
+end
+
+# -----------
+
+class Array
+  def all_hash_keys
+    return [] unless contains_all_hashes?
+    map { |x| x.keys }.flatten.uniq
+  end
+end
+
+module HashMod
+  def all_hash_keys
+    keys
+  end
+end
+
+class Object
+  def all_hash_keys
+    []
+  end
 end
 

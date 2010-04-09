@@ -15,8 +15,31 @@ class UserCollection
   def to_coll
     MockColl.from_hash_safe(:user_coll => self, :sort_conditions => sort_conditions, :filter_conditions => filter_conditions, :coll_name => coll_name, :base_coll_name => base_coll_name, :search_str => search_str, :position => position)
   end
+  fattr(:special_coll_hash) do
+    {'team_pos' => TeamPosCollection.new, 'bet_table' => BetTable.new, 'foo' => FooColl.new}
+  end
+  fattr(:base_coll) do
+    special_coll_hash[base_coll_name] || db.collection(base_coll_name)
+  end
   def self.to_colls
     all.map { |x| x.to_coll }
+  end
+  def all_hash_keys(field)
+    base_coll.all_hash_keys(field)
+  end
+end
+
+module MockFind
+  def default(rows,field)
+    return 0 if rows.map { |x| x[field] }.any? { |x| x.kind_of?(Numeric) }
+    ''
+  end
+  def find(selector={}, ops={})
+    res = rows
+    default = default(res,ops[:sort].first.first) if ops[:sort]
+     res = res.sort_by { |x| x[ops[:sort].first.first] || default } if ops[:sort]
+     res = res.reverse if ops[:sort] && ops[:sort].first.last.to_s == 'desc'
+    res
   end
 end
 
@@ -35,7 +58,52 @@ class Object
   end
 end
 
+module AddlColumns
+  def addl_column(name,&b)
+    self.addl_columns[name] = b
+  end
+  fattr(:addl_columns) { {} }
+  def add_column_value(row,b)
+    b[row]
+  rescue
+    "Error"
+  end
+  def add_addl_columns!(row)
+    addl_columns.each do |name,b|
+      row[name.to_s] = add_column_value(row,b)
+    end
+  end
+end
+
+class BetTable
+  extend AddlColumns
+    include AllHashKeysColl
+  fattr(:base_coll) { db.collection('raw_bets') }
+  def keys
+    base_coll.keys + addl_keys
+  end
+  def addl_keys
+    ['amount_bet']
+  end
+  addl_column(:amount_bet) do |row|
+    row['line'].map { |x| x['amount'].to_i }.sum
+  end
+  def find(selector={},ops={})
+    res = base_coll.find(selector,ops).to_a
+    #res.each { |x| x['amount_bet'] = 42 }
+    res.each do |row|
+      klass.add_addl_columns!(row)
+    end
+    log :bet_table, "find", {:selector => selector, :ops => ops, :res_size => res.size, :res_class => res.class}
+    res
+  end
+  def method_missing(sym,*args,&b)
+    base_coll.send(sym,*args,&b)
+  end
+end
+
 class TeamPosCollection
+  include MockFind
   def pos(player)
     res = player['position'].split(",").first
     res = 'P' if res =~ /SP/ || res =~ /RP/
@@ -71,74 +139,29 @@ class TeamPosCollection
   def keys
     ['_id','team','pa','hr','rbi','sb','avg','ip','w','sv','era','whip','spent','left','value','numplayers','playersleft']
   end
-  def default(rows,field)
-    return 0 if rows.map { |x| x[field] }.any? { |x| x.kind_of?(Numeric) }
-    ''
-  end
-  def find(selector={}, ops={})
-    res = rows
-    default = default(res,ops[:sort].first.first) if ops[:sort]
-    res = res.sort_by { |x| x[ops[:sort].first.first] || default } if ops[:sort]
-    res = res.reverse if ops[:sort] && ops[:sort].first.last.to_s == 'desc'
-    res
-  end
 end
 
-# class GroupedUserCollection
-#   include MongoMapper::Document
-#   key :coll_name
-#   key :base_coll_name
-#   key :group_key
-#   key :sum_fields
-#   def to_coll
-#     MockGroupColl.from_hash_safe(attributes)
-#   end
-#   def self.to_colls
-#     all.map { |x| x.to_coll }
-#   end
-# end
-
-# class MockGroupColl
-#   attr_accessor :coll_name, :base_coll_name, :group_key, :sum_fields, :position 
-#   fattr(:groups_hash) do
-#     db.collection(base_coll_name).sum_by(:key => group_key, :sum_fields => sum_fields)
-#   end
-#   def group_rows
-#     res = []
-#     groups_hash.each do |k,v|
-#       res << {'_id' => rand(10000000000000), 'team' => k, 'value' => v}
-#     end
-#     res
-#   end
-#   def find(selector={}, ops={})
-#     res = group_rows
-#     res = res.sort_by { |x| x[ops[:sort].first.first] || '' } if ops[:sort]
-#     res = res.reverse if ops[:sort] && ops[:sort].first.last.to_s == 'desc'
-#     res
-#   end
-#   def name
-#     coll_name 
-#   end
-#   def search_str; ''; end
-#   def sort_str; ''; end
-#   def keys; ['_id','team','value'] end
-# end
+class FooColl
+  include MockFind
+  def keys
+    ['_id','a','b']
+  end
+  def rows
+    [{'a' => 2, 'b' => 17}]
+  end
+end
 
 class MockColl
   attr_accessor :sort_conditions, :filter_conditions, :coll_name, :base_coll_name, :user_coll, :search_str
   include FromHash
-  def raw_base_coll
-    if base_coll_name == 'team_pos'
-      TeamPosCollection.new
-    else
-      db.collection(base_coll_name)
-    end
+  def base_coll
+    user_coll.base_coll
   end
   def sorted_base_coll
     sort_conditions ? SortedColl.new(:coll => filtered_base_coll, :sort_ops => sort_conditions) : filtered_base_coll
   end
   def filtered_base_coll
-    (filter_conditions && !filter_conditions.empty?) ? raw_base_coll.scope_eq(filter_conditions) : raw_base_coll
+    (filter_conditions && !filter_conditions.empty?) ? base_coll.scope_eq(filter_conditions) : base_coll
   end
   def find(selector={},ops={})
     puts "sort_conditions #{sort_conditions.inspect} ops #{ops.inspect}"
@@ -147,7 +170,7 @@ class MockColl
   #  []
   end
   def keys
-    raw_base_coll.keys
+    base_coll.keys
   end
   def name; coll_name; end
   def method_missing(sym,*args,&b)
@@ -161,7 +184,16 @@ class MockColl
     k = keys.index(sort_conditions.first.first)
     "[[#{k},'#{sort_conditions.first.last}']]"
   end
+  def all_hash_keys(field)
+    user_coll.all_hash_keys(field)
+  end
 end
 
+class UserCollection
+  def copy!
+    new_name = base_coll_name + "copy#{rand(100000)}"
+    UserCollection.create!(:coll_name => new_name, :base_coll_name => base_coll_name)
+  end
+end
 
  

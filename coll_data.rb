@@ -58,7 +58,7 @@ class CollData
   fattr(:unpaginated_count) do
     coll.find(selector,{}).count
   end
-  fattr(:keys){ coll.keys }
+  fattr(:keys){ coll.coll_keys }
   fattr(:data) do
     rows.map { |row| row.values_in_key_order(keys).map { |x| tt(x).mongo_inspect } }
   end

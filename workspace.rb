@@ -11,6 +11,7 @@ class Workspace
     #res += GroupedUserCollection.to_colls
     # res << TeamPosCollection.new
     #raise res.size.to_s
+    # res << BetTable.new
     res
   end  
   def get_coll(n)

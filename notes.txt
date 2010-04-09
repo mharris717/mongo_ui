@@ -1,0 +1,9 @@
+Goal: Get an arbitrary object, and render its input field
+
+1. get the object
+2. determine its class
+3. create a cell object for the td and that class
+4. somehow tell the object that the value is the one we have
+
+Option 1: Try to make it work as is.  make the field_info call return the hash for index 0
+Option 2: Short circuit the two level thing, and just supply the value

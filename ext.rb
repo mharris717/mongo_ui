@@ -27,6 +27,14 @@ class Hash
     end
     res
   end
+  def with_keys(*ks)
+    ks = ks.flatten
+    res = {}
+    each do |k,v|
+      res[k] = v if ks.include?(k)
+    end
+    res
+  end
 end
 
 class Object
@@ -130,6 +138,30 @@ class Hash
   end
 end
 
+class Time
+  def mongo_inspect
+    if [hour,min,sec] == [0,0,0]
+      if year == Time.now.year
+        strftime("%m/%d")
+      else
+        strftime("%m/%d/%y")
+      end
+    else
+      if year == Time.now.year
+        strftime("%m/%d %H:%M")
+      else
+        strftime("%m/%d/%y %H:%M")
+      end
+    end    
+  end
+end
+
+class Object
+  def coll_keys
+    keys
+  end
+end
+
 class Array
   def uniq_by
     h = {}
@@ -152,5 +184,24 @@ end
 class Array
   def count
     size
+  end
+end
+
+class Object
+  def safe_to_i
+    to_i
+  end
+end
+
+class String
+  def safe_to_i
+    raise "cannot cast #{self} to int" unless num?
+    to_i
+  end
+end
+
+class Array
+  def to_empty_hash
+    inject({}) { |h,k| h.merge(k => nil) }
   end
 end

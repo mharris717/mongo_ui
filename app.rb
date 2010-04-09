@@ -1,4 +1,5 @@
-$db_name ||= "test-db16"
+# players are in 16
+$db_name ||= "test-db17"
 def db
   Mongo::Connection.new.db($db_name)
 end
@@ -6,18 +7,32 @@ end
 require File.dirname(__FILE__) + "/requires"
 require 'sinatra'
 
-
+def is(coll)
+  coll.find.to_a.map { |x| x['_id'].to_s[0..-1] }
+end
 
 
 helpers do
   fattr(:coll) do
-    Workspace.instance.get_coll(params[:coll])
+    res = Workspace.instance.get_coll(params[:coll])
+    log 'coll',"getting coll #{params[:coll]}", :res => res
+    puts 'coll ' + is(res).inspect
+    res
+  end
+  fattr(:base_coll) do
+    res = coll
+    res = coll.base_coll if coll.respond_to?(:base_coll)
+    res
   end
   fattr(:row_id) { params[:row_id] }
   fattr(:row) do
     raise "no row" unless row_id
     puts "Row ID: #{row_id}"
-    coll.find_one(Mongo::ObjectID.from_string(row_id))
+    puts 'before ' + is(coll).inspect
+    res = base_coll.find_by_id(Mongo::ObjectID.from_string(row_id))
+    log :row, "base_coll: #{base_coll.name} id: #{row_id}"
+    raise "no row found for #{row_id}. Rows are " + is(coll).inspect unless res
+    res
   end
   def get_paginated
   end
@@ -44,12 +59,11 @@ helpers do
     left = coll.user_coll.position['left'].to_s + "px"
     {:top => top, :left => left}
   end
+  fattr(:field_info) { FieldInfo.new(params.with_keys('field','subfield').merge(:coll => coll, :row => row)) }
 end
 
 get "/" do
-  puts "COL SIZE: " + db.collections.map { |x| x.name }.inspect
   @colls = Workspace.instance!.colls
-  UserCollection.all.each { |x| puts x.inspect }
   haml :db
 end
 
@@ -61,8 +75,7 @@ end
 get '/update_row' do
   print_params!
   coll.update_row(params['row_id'], params['field_name'].to_s.downcase => params['field_value'], 'updated_at' => Time.now)
-  puts "Updated Row: " + row.inspect + " " + row.map_value { |x| x.class }.inspect
- # puts row['era'].map { |x| x.class }.inspect
+  log :update_row, "Updated Row: " + row.inspect + " " + row.map_value { |x| x.class }.inspect
   mongo_value(params['field_value']).mongo_inspect
 end
 
@@ -77,18 +90,12 @@ get '/table' do
 end
 
 get "/table2" do
-  # print_params!
   manager = CollData.new(:coll => coll, :params => params)
   manager.json_str#.tap { |x| puts "JSON STR"; puts x }
 end
 
 get "/copy" do
-  base =  (coll.respond_to?(:base_coll_name) ? coll.base_coll_name : coll.name)
-  new_name = base + "copy#{rand(1000)}"
-  puts "creating user collection"
-  a = UserCollection.all.size
-  UserCollection.create!(:coll_name => new_name, :base_coll_name => base)
-  puts "UC count #{a} #{UserCollection.all.size}"
+  coll.copy!
   redirect "/"
 end
 
@@ -97,38 +104,22 @@ get "/rename" do
   params[:new_name]
 end
 
-def lucky_page(name)
-  require 'open-uri'
-  url = "http://www.google.com/search?q=fangraphs #{name}&btnI=Im+Feeling+Lucky".gsub(/ /,"+")
-  puts url
-  url
-  #puts url
-  #open(url) { |f| f.read }
-end
-
-get '/cell_edit' do
-  player = row['name']
-  lucky_page(player)
-end
-
 get '/save_position' do
-  if coll.respond_to?(:user_coll)
+  #if coll.respond_to?(:user_coll)
     coll.user_coll.position = {'top' => params[:top], 'left' => params['left']}
     coll.user_coll.save!
-  end
+  #end
 end
 
 get '/field_info' do
-  ps = params.without_keys('keys')
-  File.append("log/field_info.log","#{Time.now} #{ps.inspect}\n")
-  f = row[params[:field]]
-  if params[:subfield].present?
-    sub = params[:subfield]
-    sub = sub.to_i if f.kind_of?(Array)
-    f = f[sub] 
-  end
-  cls = f.class.to_s
-  cls = 'Hash' if cls == 'OrderedHash'
-  ahk = (f.kind_of?(Array) && f.contains_all_hashes?) ? f.map { |x| x.keys }.flatten.uniq : nil
-  {'field_type' => cls, 'value' => f, 'array_hash_keys' => ahk}.to_json.tap { |x| File.append("log/field_info.log","#{Time.now} #{x}\n") }
+  log :field_info, params
+  field_info.json_str
 end
+
+get "/log" do
+  log :js, params[:str]
+end
+
+
+
+

@@ -58,7 +58,11 @@ class Mongo::Collection
   end
   def find_by_id(row_id)
     row_id = Mongo::ObjectID.from_string(row_id) if row_id.is_a?(String)
-    row = find('_id' => row_id).to_a.first
+    raw_rows = find('_id' => row_id)
+    rows = raw_rows.to_a
+    row = rows.first
+    log "find_by_id", {:coll => name, :id => row_id, :res => row, :rows_size => rows.size, :count => raw_rows.count}
+    row
   end
   def update_row(row_id,fields)
     row = find_by_id(row_id)
@@ -89,4 +93,14 @@ class Mongo::Collection
       old_update(id,h,*args)
     end
   #end
+end
+
+module AllHashKeysColl
+  def all_hash_keys(field)
+    find.map { |row| row[field].all_hash_keys }.flatten.uniq.sort
+  end
+end
+
+class Mongo::Collection
+  include AllHashKeysColl
 end

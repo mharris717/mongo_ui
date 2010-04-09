@@ -15,7 +15,7 @@ function arrayCell() {
         function abc(child) {
             var c = new collCell($(child),td)
             var cls = c.guessInheritanceClass()
-            
+            smeDebug('array fieldVals',{guessed_class: cls})
             c.setupInheritanceIfPossible()
             var res = c.fieldVals()
             smeDebug('guess',{cls: cls, res: res})
@@ -37,7 +37,7 @@ function arrayCell() {
                 td.find('table').eq(0).append(str)
             }
             else {
-                td.find('table').eq(0).append(Jaml.render('array-entry-row',{val: '', parent_id: td.attr('id')}))
+                td.find('table').eq(0).append(array_entry_row({val: '', parent_id: td.attr('id')}))
             }
             
         })
@@ -45,9 +45,15 @@ function arrayCell() {
     
     this.getInputHtmlInner = function(field_info,is_child,td_id) {
         smeDebug('array getInputHtmlInner')
-        smeDebug('getInputHtmlInner',{field_info: field_info})
-        if (isBlank(field_info.length) || field_info.length == 0) field_info = ['']
-        return array_entry(field_info, is_child, td_id)
+        smeDebug('array getInputHtmlInner',{field_info: field_info})
+        
+        if (isPresent(field_info['array_hash_keys']) && false) {
+            //return hash_entry(arrayToBlankHash(field_info['array_hash_keys']), is_child, td_id)
+        }
+        if (isPresent(field_info.value)) {
+            if (isBlank(field_info.value.length) || field_info.value.length == 0) field_info.value = ['']
+        }
+            return array_entry(field_info.value, is_child, td_id)
     }
     
     return this;
@@ -86,7 +92,7 @@ function hashCell() {
     }
     
     this.getInputHtmlInner = function(field_info,is_child,td_id) {
-        return hash_entry(field_info, is_child, td_id)
+        return hash_entry(field_info.value, is_child, td_id)
     }
 }
 dclick = false

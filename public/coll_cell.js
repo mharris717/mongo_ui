@@ -60,15 +60,28 @@ function collCell(t,r,top_cb) {
         return isPresent(initial_root_td)
     }
     
+    function hasChild() {
+        return td.find('table').length > 0
+    }
+    
     function fieldInfoOps() {
         var ops = isChild() ? {subfield: td.attr('data-key')} : {}
         return baseOps(ops)
     }
     
+    this.guessInheritanceClass = function() {
+        if (dclick) return 'Array'
+        if (td.find('table').length == 0) {
+            return null
+        }
+        var k = td.find('table').eq(0).attr('data-type')
+        return isPresent(k) ? k : null
+    }
+    
     var withTypeInner = function(f) {
         $.getJSON("/field_info",fieldInfoOps(),function(data) {
             if (dclick) data['field_type'] = 'Array'
-            if (isPresent(me.guessInheritanceClass())) data['field_type'] = guessInheritanceClass() 
+            if (isPresent(me.guessInheritanceClass()) && isPresent(data)) data['field_type'] = me.guessInheritanceClass() 
             saved_field_info = data
             smeDebug('field_info',data)
             f(data)
@@ -77,7 +90,7 @@ function collCell(t,r,top_cb) {
     
     var withType = function(f) {
         if (saved_field_info == null) {
-            if (isPresent(me.guessInheritanceClass())) saved_field_info['field_type'] = guessInheritanceClass() 
+            if (isPresent(me.guessInheritanceClass()) && isPresent(saved_field_info)) saved_field_info['field_type'] = me.guessInheritanceClass() 
             withTypeInner(f)
         }
         else {
@@ -89,7 +102,7 @@ function collCell(t,r,top_cb) {
     
     //override this in subclasses
     this.getInputHtmlInner = function(field_info,c,t) {
-        return std_entry_field(field_info)
+        return std_entry_field(field_info.value)
     }
     
     //override this.setupField in subclass
@@ -97,17 +110,28 @@ function collCell(t,r,top_cb) {
     //override this.addField in subclass
     
     var getInputHtml = function(field_info) {
-        var res = me.getInputHtmlInner(field_info.value,isChild(),td.attr('id'))
+        var res = me.getInputHtmlInner(field_info,isChild(),td.attr('id'))
         //smeDebug("getInputHtml",{res: res, val: field_info.value})
         return res
     }
-    
+
     this.setInputHtml = function(cb) {
         smeDebug('setInputHtml')
         withType(function(fi) {
             var res = getInputHtml(fi)
             //smeDebug('setInputHtml',{res: res})
             td.html(res)
+            
+            if (!isChild()) {
+                notRun = false;
+                var val_td = td.find('td.value').eq(0)
+                smeDebug('val_td',{sz: td.find('td.value').length})
+                var val_cell = new collCell(val_td,td)
+                val_cell.sb = hashCell
+                val_cell.sb()
+                val_cell.setInputHtml()
+            }
+            
             td.find('a.add').click(me.addField)
             td.find('a.save').click(function() {
                 myGet("/update_row", updateRowOps(me.fieldVals()), td)
@@ -156,14 +180,7 @@ function collCell(t,r,top_cb) {
     
     function plainCellSetup() { this.setupField = this.setupFieldPlain }
     
-    this.guessInheritanceClass = function() {
-        if (dclick) return 'Array'
-        if (td.find('table').length == 0) {
-            return null
-        }
-        var k = td.find('table').eq(0).attr('data-type')
-        return isPresent(k) ? k : null
-    }
+    
     function inheritanceHash() {
         return {'Array': arrayCell, 'Hash': hashCell}
     }
@@ -174,6 +191,7 @@ function collCell(t,r,top_cb) {
     }
     this.setupInheritanceIfPossible = function() {
         var f = me.guessInheritanceFunc()
+        smeDebug('setupInheritanceIfPossible',{cls: me.guessInheritanceClass(), f: f})
         if (isBlank(f)) return
         this.sb = f
         this.sb()
@@ -255,3 +273,4 @@ function setupCellEdit() {
         c.editCell()
     })
 }
+    notRun = true

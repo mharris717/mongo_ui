@@ -5,7 +5,8 @@ function smeDebug(str,attrs) {
         })
     }
     var d = new Date();
-    str = prettyTime()+' | '+str
+    //str = prettyTime()+' | '+str
+    //$.get("/log",{str: str},function(data) {})
     console.debug(str)
 }
 
@@ -167,4 +168,17 @@ function arrayToBlankHash(arr) {
         res[this] = null
     })
     return res
+}
+
+function getClass(obj) {
+    var res = obj.constructor.toString().substr(9,4)
+    smeDebug('getClass',{obj: obj, res: res})
+    smeDebug(obj)
+    return res
+}
+function isArray(obj) {
+    return getClass(obj) == 'Arra'
+}
+function isString(obj) {
+    return getClass(obj) == 'Stri'
 }
