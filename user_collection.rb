@@ -1,4 +1,5 @@
 require 'mongo_mapper'
+MongoMapper.connection = conn
 MongoMapper.database = $db_name
 class UserCollection
   include MongoMapper::Document
@@ -26,6 +27,14 @@ class UserCollection
   end
   def all_hash_keys(field)
     base_coll.all_hash_keys(field)
+  end
+  def column_attr_hash
+    res = base_coll.keys.inject({}) { |h,k| h.merge(k => {:editable => true})}
+    return res unless base_coll.respond_to?(:addl_keys)
+    base_coll.addl_keys.each do |k|
+      res[k][:editable] = false
+    end
+    res
   end
 end
 
@@ -60,15 +69,16 @@ end
 
 module AddlColumns
   def addl_column(name,&b)
-    self.addl_columns[name] = b
+    self.addl_columns[name.to_s] = b
   end
-  fattr(:addl_columns) { {} }
+  fattr(:addl_columns) { OrderedHash.new }
   def add_column_value(row,b)
     b[row]
-  rescue
-    "Error"
+  rescue => exp
+    exp.message
   end
   def add_addl_columns!(row)
+    log "addl_columns",addl_columns.size
     addl_columns.each do |name,b|
       row[name.to_s] = add_column_value(row,b)
     end
@@ -77,16 +87,71 @@ end
 
 class BetTable
   extend AddlColumns
-    include AllHashKeysColl
+  include AllHashKeysColl
   fattr(:base_coll) { db.collection('raw_bets') }
   def keys
     base_coll.keys + addl_keys
   end
   def addl_keys
-    ['amount_bet']
+    klass.addl_columns.keys
   end
   addl_column(:amount_bet) do |row|
     row['line'].map { |x| x['amount'].to_i }.sum
+  end
+  addl_column(:visiting_perc) do |row|
+    100 - row['home_perc']
+  end
+  addl_column(:pinny_home) { Odds.get('+115') }
+  def self.get_bet_hash(side,pinny,other_pinny,perc,row)
+    middle = Odds.new((pinny.rfd + other_pinny.rfd) / 2.0)
+    middle = middle.flip if side == 'H'
+    res = {}
+    res['team'] = (side == 'V') ? row['away'] : row['home']
+    res['perc'] = perc
+    res['side'] = side
+    res['bet'] = perc / 100.0 * 1000000
+    res['true'] = pinny.perc
+    res['new'] = middle
+    res['vegas_win'] = res['new'].rfd * res['bet']
+    res.map_value { |v| v.kind_of?(Numeric) ? v.round_dec(3) : v }
+    # res
+  end
+  def self.mod_bet_hashes(v,h)
+    v['veg_profit'] = (v['vegas_win'] - h['bet']) * -1.0
+    h['veg_profit'] = (h['vegas_win'] - v['bet']) * -1.0
+    v['vd'] = v['veg_profit'] - h['veg_profit']
+    h['vd'] = v['vd'] * -1
+  end
+  def self.mod_bet_hash(row)
+    row['should_bet'] = row['vd'] > 100000
+  end
+  def self.get_pinny(row,t)
+    res = row['line'].select { |x| x['site'] == 'Pinnacle' && x['team'] == t }.last
+    return nil unless res
+    Odds.get(res['odds'])
+  end
+  addl_column(:foo) do |row|
+    res = []
+    pinny_home = get_pinny(row,row['home'])
+    pinny_away = get_pinny(row,row['away'])
+    if pinny_away
+      res << get_bet_hash('V',pinny_away,pinny_home,row['visiting_perc'],row)
+      res << get_bet_hash('H',pinny_home,pinny_away,row['home_perc'],row)
+      mod_bet_hashes(*res)
+      res.each { |x| mod_bet_hash(x) }
+      res
+    else
+      nil
+    end
+  end
+  addl_column(:vd) do |row|
+    f = row['foo']
+    res = f[0]['veg_profit'] - f[1]['veg_profit']
+    res.abs
+  end
+  addl_column(:team_to_bet) do |row|
+    res = row['foo'].select { |x| x['should_bet'] }.first
+    res ? res['team'] : nil
   end
   def find(selector={},ops={})
     res = base_coll.find(selector,ops).to_a
@@ -186,6 +251,9 @@ class MockColl
   end
   def all_hash_keys(field)
     user_coll.all_hash_keys(field)
+  end
+  def column_attr_hash
+    user_coll.column_attr_hash
   end
 end
 

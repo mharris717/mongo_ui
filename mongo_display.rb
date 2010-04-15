@@ -35,11 +35,11 @@ end
 
 class Numeric
   def tmo
-    (self == to_i) ? to_i : self
+    (self == to_i) ? to_i : self.round_dec(3)
   end
 end
 
-require 'parsedate'
+# require 'parsedate'
 class Time
   def self.parsedate(str)
     args = ParseDate.parsedate(str)

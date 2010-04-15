@@ -205,3 +205,48 @@ class Array
     inject({}) { |h,k| h.merge(k => nil) }
   end
 end
+
+class Object
+  def dot_get(str)
+    str = str.split(".") if str.is_a?(String)
+    res = self
+    last_f = last_res = nil
+    str.each do |f|
+      if res.nil? && f.num?
+        last_res[last_f] = res = []
+      end
+      last_res = res
+      if res.kind_of?(Array)
+        temp = res[f.safe_to_i]
+        if !temp
+          res << {}
+          temp = res.last
+          raise "can only add new row at end" unless res.size-1 == f.safe_to_i
+        end
+        res = temp
+      else
+        res = res[f]
+      end
+      last_f = f
+    end
+    res
+  end
+  def dot_set(str,val)
+    return self[str] = val if str.split(".").size == 1
+    strs = str.split(".")[0..-2]
+    lst = str.split(".")[-1]
+    obj = dot_get(strs)
+    puts "dot_set, obj is #{obj.inspect}, str is #{str}, val is #{val}, lst is #{lst}"
+    obj[lst] = val
+  end
+end
+
+class Numeric
+  def round_dec(n)
+    x = self
+    n.times { x *= 10 }
+    x = x.to_i.to_f
+    n.times { x /= 10 }
+    x
+  end
+end

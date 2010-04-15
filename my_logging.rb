@@ -1,4 +1,4 @@
-Dir["log/*.log"].each { |x| `rm #{x}` }
+# Dir["log/*.log"].each { |x| `rm #{x}` }
 
 class MyLog
   attr_accessor :name
@@ -14,6 +14,6 @@ class MyLog
 end
 
 def log(name,*strs)
-  MyLog.new(:name => name).log(strs)
-  MyLog.new(:name => 'all').log([name]+[strs])
+  # MyLog.new(:name => name).log(strs)
+  # MyLog.new(:name => 'all').log([name]+[strs])
 end

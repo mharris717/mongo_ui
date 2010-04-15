@@ -1,3 +1,8 @@
+function lastOne(arr) {
+    var i = arr.length - 1
+    return arr.eq(i)
+}
+
 function arrayCell() {
     var td = this.getTd()
     var me = this
@@ -30,18 +35,16 @@ function arrayCell() {
     this.addField = function() {
         me.wt(function(fi) {
             smeDebug('array addField',fi)
-            if (isPresent(fi['array_hash_keys'])) {
-                var new_id = randID()
-                var str = hash_entry(arrayToBlankHash(fi['array_hash_keys']), false, new_id)
-                str = "<tr><td>17</td><td id='"+new_id+"' class='value "+td.attr('id')+"'>"+str + "</td></tr>"
-                td.find('table').eq(0).append(str)
-            }
-            else {
-                td.find('table').eq(0).append(array_entry_row({val: '', parent_id: td.attr('id')}))
-            }
+            td.find('table').eq(0).append(array_entry_row({val: '', parent_id: td.attr('id'), ind: '17'}))
+            var new_td = lastOne(td.find('table').eq(0).find('tr')).find('td.value')
+            var new_cell = new collCell(new_td,17)
+            new_cell.fiSetup(function(x) {
+                x.setInputHtml()
+            })
             
         })
     }
+
     
     this.getInputHtmlInner = function(field_info,is_child,td_id) {
         smeDebug('array getInputHtmlInner')
@@ -89,6 +92,11 @@ function hashCell() {
     
     this.addField = function() {
         td.find('table').eq(0).append(Jaml.render('hash-entry-row',{val: '', key: '', parent_id: td.attr('id')}))
+        var new_td = lastOne(td.find('table').eq(0).find('tr')).find('td.value')
+        var new_cell = new collCell(new_td,17)
+        new_cell.fiSetup(function(x) {
+            x.setInputHtml()
+        })
     }
     
     this.getInputHtmlInner = function(field_info,is_child,td_id) {

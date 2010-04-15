@@ -1,18 +1,82 @@
 function collCell(t,r,top_cb) {
     var me = this
+    
+    this.meAndEachParentTd = function(f) {
+        f($(td))
+        var next = me.findNextRoot()
+        if (isPresent(next)) {
+            var cell = new collCell(next)
+            cell.meAndEachParentTd(f)
+        }
+    }
+    
+    this.getUltimateRoot = function() {
+        if ($(root_td).hasClass('value')) {
+            return rootTd
+        }
+    }
+    
+    this.getFieldName2 = function() {
+        if (isPresent($(td).attr('data-key'))) {
+            return $(td).attr('data-key')
+        }
+        else {
+            return field_name
+        }
+    }
+    
+    this.getFullFieldName = function() {
+      var res = ''
+      me.meAndEachParentTd(function(x) {
+          var c = collCell(x)
+          if (isPresent(res)) res = "." + res
+          res = c.getFieldName2() + res
+      })    
+      return res
+    }
+    
+    this.findRoot = function() {
+        var res = $(td)
+        while (true) {
+            if (res.parent().length == 0) return null
+            
+            res = res.parent()
+            if (res.parent().hasClass('odd') || res.parent().hasClass('even')) return res
+        }
+    }
+    
+    this.findNextRoot = function() {
+        var res = $(td)
+        while (true) {
+            if (res.parent().length == 0) return null
+            
+            res = res.parent()
+            if (res.parent().hasClass('odd') || res.parent().hasClass('even')) return res
+            if (res.hasClass('value')) return res
+        }
+    }
+    
+    this.theRoot = function() {
+        var res = me.findRoot()
+        if (isPresent(res)) return res
+        return root_td
+    }
+    
+    
     var initial_root_td = r
     var root_td = r
     var td = $(t)
+    if (root_td == 17) root_td = me.findNextRoot()
     if (isBlank(root_td)) root_td = td
     var val = td.text()
-    var row = root_td.parent()
+    var row = me.theRoot().parent()
     var table = row.parent().parent()
     var coll_name = table.attr('data-coll')
     var c = coll(coll_name)
     var row_id = row.find('td:first').text()
-    var column_index = getIndex(root_td[0],directChildren("td",row))
+    var column_index = getIndex(me.theRoot()[0],directChildren("td",row))
     var field_name = table.find('tr:first th').eq(column_index).text()
-    smeDebug('nested table',{colindex: column_index, fieldname: field_name})
+//    smeDebug('nested table',{colindex: column_index, fieldname: field_name})
     var saved_field_info = null
     
     function ensureCellHasID() {
@@ -32,19 +96,19 @@ function collCell(t,r,top_cb) {
     this.getTd = function() { return td }
     this.getNaiveFieldName = function() { return field_name }
     this.text = function() { return td.text(); }
-    function std_entry_field(val) { return textInputField({value: val}); }
+    function std_entry_field(val) { return textInputField({value: val, 'class': 'single'}); }
     function getRowID() {
         var i = ''+row_id
         if (i.length != 24) {
-            alert("bad row id "+i)
+//            alert("bad row id "+i)
         }
         return row_id
     }
     function baseOps(ops) { 
-        return hash_merge({coll: coll_name, row_id: getRowID(),field: me.getFieldName()},ops)
+        return hash_merge({coll: coll_name, row_id: getRowID(),field: me.getFullFieldName()},ops)
     }
     this.getFieldName = function() {
-        return isChild() ? collCell(root_td).getFieldName() : me.getNaiveFieldName();
+        return isChild() ? collCell(me.theRoot()).getFieldName() : me.getNaiveFieldName();
     }
     
     function getVal() {
@@ -122,15 +186,20 @@ function collCell(t,r,top_cb) {
             //smeDebug('setInputHtml',{res: res})
             td.html(res)
             
-            if (!isChild()) {
-                notRun = false;
-                var val_td = td.find('td.value').eq(0)
-                smeDebug('val_td',{sz: td.find('td.value').length})
-                var val_cell = new collCell(val_td,td)
-                val_cell.sb = hashCell
-                val_cell.sb()
-                val_cell.setInputHtml()
-            }
+            // td.find('td.value').each(function() {
+            //         var val_td = $(this)
+            //         smeDebug('val_td',{sz: td.find('td.value').length})
+            //         var val_cell = new collCell(val_td,td)
+            //         val_cell.sb = hashCell
+            //         val_cell.sb()
+            //         val_cell.setInputHtml()
+            //     })
+            
+            smeDebug('no child',{sz: td.find('input').length})
+            //if (!hasChild()) {
+                
+                td.find('input').autocomplete("/ac",{extraParams: {coll: coll_name, field: me.getFullFieldName()}})
+            //}
             
             td.find('a.add').click(me.addField)
             td.find('a.save').click(function() {
@@ -142,16 +211,19 @@ function collCell(t,r,top_cb) {
                 td.html(field_type_selector())
             })
             if (isPresent(cb)) cb()
-            if (td.find('table').length == 0) {
-                td.find('input').blur(function() {
+            if (!isChild()) {
+                td.find('input.single').blur(function() {
                          myGet("/update_row", updateRowOps($(this).val()), td) 
                      })
             }
+            eachInnerTd(function(x) { x.setInputHtml() })
         })
+        
         
     }
     
     function eachInnerTd(f) {
+        smeDebug('eachInnerTd',{sz: td.find("td.value").length})
         td.find("td.value").each(function() {
             var c = new collCell(this,root_td)
             c.fiSetup(f)
@@ -217,14 +289,17 @@ function collCell(t,r,top_cb) {
         withType(function(field_info) {
             setupInheritance(field_info)
             me.setInputHtml()
-            eachInnerTd(function(x) { x.setInputHtml() })
+            //eachInnerTd(function(x) { x.setInputHtml() })
             me.setupField()
             td.find('input').eq(0).focus()
         })     
     })
 
+    function currentlyEditing() {
+        return td.find('input').length > 0 || td.find('select').length > 0
+    }
     this.editCell = function() {
-        if (edited) return;
+        if (currentlyEditing()) return
         editCellInner()
         edited = true
     }
@@ -236,15 +311,6 @@ function collCell(t,r,top_cb) {
         })
     }
     
-    this.findRoot = function() {
-        var res = $(td)
-        while (true) {
-            if (res.parent().length == 0) return null
-            
-            res = res.parent()
-            if (res.parent().hasClass('odd') || res.parent().hasClass('even')) return res
-        }
-    }
     
     this.changeType = function(new_type) {
         if (new_type != 'plain') {

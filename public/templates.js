@@ -12,10 +12,7 @@ Jaml.register("array-entry-row",function(el) {
 })
 
 function array_entry_row(el,parent_id) {
-    //var val = render_input(el,true,parent_id)
-    //el.render_val = val
     return Jaml.render('array-entry-row',el)
-
 }
 
 Jaml.register("hash-entry-row",function(el) {
@@ -23,25 +20,10 @@ Jaml.register("hash-entry-row",function(el) {
     tr(
         td( input({type: 'text', value: el.key}) ),
         td( {'class': 'value ' + el['parent_id'], 'data-key': ''+el.key},
-            input({type: 'text', value: el.val}) 
+            ''
         )
     )
 })
-
-
-
-function render_input(el,child,parent_id) {
-    smeDebug('render_input',{val: el.val, cls: getClass(el.val)})
-    if (isArray(el.val)) {
-        return array_entry(el.val,child,parent_id)
-    }
-    else if (isString(el.val)) {
-        return textInputField({value: el.val})
-    }
-    else {
-        return hash_entry(el.val,child,parent_id)
-    }
-}
 
 function array_entry(arr,child,parent_id) {
     console.debug("array_entry",{arr: arr, child: child, parent: parent_id, sz: arr.length})

@@ -65,13 +65,15 @@ class Mongo::Collection
     row
   end
   def update_row(row_id,fields)
-    row = find_by_id(row_id)
+    row = (row_id == 'NEW') ? {} : find_by_id(row_id)
     raise "can't find row #{row_id} #{row_id.class} in coll #{name}.  Count is #{find.count} IDs are "+find.to_a.map { |x| x['_id'] }.inspect + "Trying to update with #{fields.inspect}" unless row
     fields.each do |k,v|
-      row[k] = mongo_value(v)
+      row.dot_set(k,mongo_value(v))
       row.delete(k) if v.blank?
     end
     save(row)
+    puts "row is #{row.inspect}"
+    row
   end
   def base_name
     name
